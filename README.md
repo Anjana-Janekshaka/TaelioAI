@@ -1,2 +1,17 @@
-# TaelioAI
-TaelioAI is an intelligent AI-powered tool designed to help writers, storytellers, and creatives bring their ideas to life. It acts as a story idea generator, writer, and editor agent all in one. Whether you want to brainstorm plots, draft stories, or polish your writing, TaelioAI provides inspired, coherent, and engaging content in seconds.
+TaelioAI 🚀
+
+TaelioAI – Your AI Storytelling Companion
+
+TaelioAI is an AI-powered story assistant that helps you generate, write, and edit stories effortlessly. Whether you’re brainstorming ideas, drafting narratives, or polishing your writing, TaelioAI brings your stories to life!
+
+Features ✨
+
+Idea Generator: Spark creative story ideas from simple prompts.
+
+Story Writer: Automatically draft compelling narratives.
+
+Editor Agent: Improve grammar, style, and coherence.
+
+Customizable Output: Tailor tone and genre to your preference.
+
+Fun & Interactive: Designed for writers, hobbyists, and creatives.
