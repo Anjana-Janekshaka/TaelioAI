@@ -14,6 +14,7 @@ data = {
 # Make the POST request
 try:
     response = requests.post(url, json=data)
+    print(data)
     
     if response.status_code == 200:
         result = response.json()
