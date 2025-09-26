@@ -1,36 +1,33 @@
-import os
-from fastapi import FastAPI, HTTPException
+# backend/app/main.py
+from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from dotenv import load_dotenv
-import sys
-import os
+import sys, os
+
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+
+# Import routes
 from api import story_writer_routes
+from api import story_editor_routes  ## story_editor
 
 # Load environment variables from .env file
 load_dotenv()
 
-# Check if required environment variables are set
-api_key = os.getenv("GEMINI_API_KEY")
-if not api_key:
-    print("WARNING: GEMINI_API_KEY environment variable is not set!")
-    print("Please create a .env file in the backend directory with your Google API key.")
-else:
-    print(f"✅ GEMINI_API_KEY loaded successfully: {api_key[:10]}...")
-    print(f"Environment variable length: {len(api_key)}")
-
+# Initialize FastAPI
 app = FastAPI(title="TaelioAI Story Writer API", version="1.0.0")
 
 # Add CORS middleware
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],  # Configure this properly for production
+    allow_origins=["*"],  # Change for production
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
 )
 
+# Include routers
 app.include_router(story_writer_routes.router, prefix="/story", tags=["Story Writer"])
+app.include_router(story_editor_routes.router, prefix="/story_editor", tags=["Story Editor"])
 
 @app.get("/")
 async def root():

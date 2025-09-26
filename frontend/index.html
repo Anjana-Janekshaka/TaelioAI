@@ -1,0 +1,91 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>TaelioAI Story Editor</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 40px;
+            background-color: #f4f4f9;
+            color: #333;
+        }
+        h1 {
+            text-align: center;
+            color: #4b6cb7;
+        }
+        textarea {
+            width: 100%;
+            height: 150px;
+            padding: 10px;
+            font-size: 16px;
+            border-radius: 6px;
+            border: 1px solid #ccc;
+            resize: vertical;
+        }
+        button {
+            margin-top: 10px;
+            padding: 10px 20px;
+            font-size: 16px;
+            background-color: #4b6cb7;
+            color: white;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+        }
+        button:hover {
+            background-color: #3a529b;
+        }
+        .output {
+            margin-top: 20px;
+            padding: 15px;
+            background-color: #fff;
+            border-radius: 6px;
+            border: 1px solid #ccc;
+            white-space: pre-wrap;
+        }
+    </style>
+</head>
+<body>
+
+    <h1>TaelioAI Story Editor</h1>
+
+    <textarea id="storyInput" placeholder="Paste your story here..."></textarea>
+    <button onclick="editStory()">Edit Story</button>
+
+    <div class="output" id="editedOutput"></div>
+
+    <script>
+        async function editStory() {
+            const story = document.getElementById("storyInput").value;
+            if (!story) {
+                alert("Please enter a story to edit!");
+                return;
+            }
+
+            document.getElementById("editedOutput").textContent = "Editing...";
+
+            try {
+                const response = await fetch("http://127.0.0.1:8000/story_editor/edit", {
+                    method: "POST",
+                    headers: {
+                        "Content-Type": "application/json"
+                    },
+                    body: JSON.stringify({ text: story })
+                });
+
+                const data = await response.json();
+                if (data.edited) {
+                    document.getElementById("editedOutput").textContent = data.edited;
+                } else {
+                    document.getElementById("editedOutput").textContent = "Error editing story.";
+                }
+            } catch (err) {
+                document.getElementById("editedOutput").textContent = "Error: " + err.message;
+            }
+        }
+    </script>
+
+</body>
+</html>
