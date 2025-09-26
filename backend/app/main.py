@@ -5,7 +5,9 @@ from dotenv import load_dotenv
 import sys
 import os
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
-from api import story_writer_routes
+from api.routes import story as story_routes
+from api.routes import idea as idea_routes
+from api.routes import workflow as workflow_routes
 
 # Load environment variables from .env file
 load_dotenv()
@@ -30,11 +32,24 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-app.include_router(story_writer_routes.router, prefix="/story", tags=["Story Writer"])
+# Include all routers
+app.include_router(story_routes.router, prefix="/story", tags=["Story Writer"])
+app.include_router(idea_routes.router, prefix="/idea", tags=["Idea Generator"])
+app.include_router(workflow_routes.router, prefix="/workflow", tags=["Multi-Agent Workflow"])
 
 @app.get("/")
 async def root():
-    return {"message": "TaelioAI Story Writer API is running!"}
+    return {
+        "message": "TaelioAI Multi-Agent Story Generation API is running!",
+        "version": "1.0.0",
+        "agents": ["Idea Generator", "Story Writer"],
+        "endpoints": {
+            "idea_generator": "/idea/generate-idea",
+            "story_writer": "/story/write-story", 
+            "full_workflow": "/workflow/generate-full-story",
+            "workflow_info": "/workflow/workflow-info"
+        }
+    }
 
 @app.get("/health")
 async def health_check():

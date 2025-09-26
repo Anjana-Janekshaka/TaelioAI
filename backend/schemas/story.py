@@ -1,5 +1,6 @@
 from pydantic import BaseModel
 
+# Story Writer Schemas
 class StoryRequest(BaseModel):
     title: str
     genre: str
