@@ -1,7 +1,9 @@
-from fastapi import APIRouter, HTTPException
+from fastapi import APIRouter, HTTPException, Depends
 from schemas.idea import IdeaRequest, IdeaResponse
 from services.idea_generator import generate_idea
 import logging
+from auth.dependencies import get_current_user, UserContext
+from services.limits.rate_limiter import allow
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
@@ -9,10 +11,11 @@ logger = logging.getLogger(__name__)
 router = APIRouter()
 
 @router.post("/generate-idea", response_model=IdeaResponse)
-def generate_story_idea(request: IdeaRequest):
+def generate_story_idea(request: IdeaRequest, user: UserContext = Depends(get_current_user)):
     try:
+        allow(user.user_id, user.tier, route_key="idea:generate")
         logger.info(f"Received idea generation request: prompt='{request.prompt[:50]}...', genre={request.genre}")
-        result = generate_idea(request)
+        result = generate_idea(request, tier=user.tier)
         logger.info("Story idea generated successfully")
         return result
     except Exception as e:
