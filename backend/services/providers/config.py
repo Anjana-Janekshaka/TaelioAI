@@ -43,27 +43,27 @@ MODEL_CONFIGURATIONS = {
         TierType.FREE: {
             "primary": ProviderType.GEMINI,
             "models": {
-                ProviderType.GEMINI: "gemini-1.5-flash",
+                ProviderType.GEMINI: "gemini-2.5-flash",
                 ProviderType.OPENAI: "gpt-3.5-turbo",
                 ProviderType.ANTHROPIC: "claude-3-haiku-20240307"
             },
             "fallback_order": [ProviderType.GEMINI, ProviderType.OPENAI, ProviderType.ANTHROPIC]
         },
         TierType.PRO: {
-            "primary": ProviderType.OPENAI,
+            "primary": ProviderType.GEMINI,
             "models": {
-                ProviderType.OPENAI: "gpt-4",
-                ProviderType.ANTHROPIC: "claude-3-sonnet-20240229",
-                ProviderType.GEMINI: "gemini-1.5-pro"
+                ProviderType.GEMINI: "gemini-2.5-flash",
+                ProviderType.OPENAI: "gpt-3.5-turbo",
+                ProviderType.ANTHROPIC: "claude-3-haiku-20240307"
             },
-            "fallback_order": [ProviderType.OPENAI, ProviderType.ANTHROPIC, ProviderType.GEMINI]
+            "fallback_order": [ProviderType.GEMINI, ProviderType.OPENAI, ProviderType.ANTHROPIC]
         },
         TierType.ADMIN: {
             "primary": ProviderType.ANTHROPIC,
             "models": {
-                ProviderType.ANTHROPIC: "claude-3-sonnet-20240229",
-                ProviderType.OPENAI: "gpt-4",
-                ProviderType.GEMINI: "gemini-1.5-pro"
+                ProviderType.ANTHROPIC: "claude-3-haiku-20240307",
+                ProviderType.OPENAI: "gpt-3.5-turbo",
+                ProviderType.GEMINI: "gemini-2.5-flash"
             },
             "fallback_order": [ProviderType.ANTHROPIC, ProviderType.OPENAI, ProviderType.GEMINI]
         }
@@ -72,27 +72,27 @@ MODEL_CONFIGURATIONS = {
         TierType.FREE: {
             "primary": ProviderType.GEMINI,
             "models": {
-                ProviderType.GEMINI: "gemini-1.5-flash",
+                ProviderType.GEMINI: "gemini-2.5-flash",
                 ProviderType.OPENAI: "gpt-3.5-turbo",
                 ProviderType.ANTHROPIC: "claude-3-haiku-20240307"
             },
             "fallback_order": [ProviderType.GEMINI, ProviderType.OPENAI, ProviderType.ANTHROPIC]
         },
         TierType.PRO: {
-            "primary": ProviderType.ANTHROPIC,
+            "primary": ProviderType.GEMINI,
             "models": {
-                ProviderType.ANTHROPIC: "claude-3-sonnet-20240229",
-                ProviderType.OPENAI: "gpt-4",
-                ProviderType.GEMINI: "gemini-1.5-pro"
+                ProviderType.GEMINI: "gemini-2.5-flash",
+                ProviderType.ANTHROPIC: "claude-3-haiku-20240307",
+                ProviderType.OPENAI: "gpt-3.5-turbo"
             },
-            "fallback_order": [ProviderType.ANTHROPIC, ProviderType.OPENAI, ProviderType.GEMINI]
+            "fallback_order": [ProviderType.GEMINI, ProviderType.ANTHROPIC, ProviderType.OPENAI]
         },
         TierType.ADMIN: {
             "primary": ProviderType.OPENAI,
             "models": {
-                ProviderType.OPENAI: "gpt-4",
-                ProviderType.ANTHROPIC: "claude-3-sonnet-20240229",
-                ProviderType.GEMINI: "gemini-1.5-pro"
+                ProviderType.OPENAI: "gpt-3.5-turbo",
+                ProviderType.ANTHROPIC: "claude-3-haiku-20240307",
+                ProviderType.GEMINI: "gemini-2.5-flash"
             },
             "fallback_order": [ProviderType.OPENAI, ProviderType.ANTHROPIC, ProviderType.GEMINI]
         }

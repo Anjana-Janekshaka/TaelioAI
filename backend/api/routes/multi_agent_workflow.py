@@ -1,10 +1,11 @@
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
+from typing import Optional
 from db.database import get_db
 from auth.dependencies import get_current_user, UserContext
 from services.limits.rate_limiter import allow
 from services.orchestrator import multi_agent_system
-from schemas.workflow import WorkflowRequest, WorkflowResponse
+from schemas.workflow import WorkflowRequest, WorkflowResponse, FullStoryRequest
 from metrics.usage import log_usage
 import logging
 
@@ -46,7 +47,8 @@ async def execute_orchestrated_workflow(
                 tokens_out=0,  # Will be updated by individual agents
                 latency_ms=step["execution_time_ms"],
                 cost_usd=0.0,  # Will be calculated by individual agents
-                db=db
+                db=db,
+                user_tier=current_user.tier  # Pass user tier for Prometheus metrics
             )
         
         logger.info(f"Orchestrated workflow completed successfully: {result['workflow_id']}")
@@ -58,9 +60,7 @@ async def execute_orchestrated_workflow(
 
 @router.post("/full-story-orchestrated")
 async def generate_full_story_orchestrated(
-    prompt: str,
-    genre: Optional[str] = None,
-    tone: Optional[str] = None,
+    request: FullStoryRequest,
     current_user: UserContext = Depends(get_current_user),
     db: Session = Depends(get_db)
 ):
@@ -73,9 +73,9 @@ async def generate_full_story_orchestrated(
         workflow_request = WorkflowRequest(
             workflow_type="full_story_generation",
             input_data={
-                "prompt": prompt,
-                "genre": genre,
-                "tone": tone
+                "prompt": request.prompt,
+                "genre": request.genre,
+                "tone": request.tone
             },
             user_id=current_user.user_id,
             user_tier=current_user.tier
@@ -98,9 +98,7 @@ async def generate_full_story_orchestrated(
 
 @router.post("/idea-only-orchestrated")
 async def generate_idea_only_orchestrated(
-    prompt: str,
-    genre: Optional[str] = None,
-    tone: Optional[str] = None,
+    request: FullStoryRequest,
     current_user: UserContext = Depends(get_current_user),
     db: Session = Depends(get_db)
 ):
@@ -113,9 +111,9 @@ async def generate_idea_only_orchestrated(
         result = await multi_agent_system.orchestrate_workflow(
             workflow_type="idea_only",
             input_data={
-                "prompt": prompt,
-                "genre": genre,
-                "tone": tone
+                "prompt": request.prompt,
+                "genre": request.genre,
+                "tone": request.tone
             },
             user_id=current_user.user_id,
             user_tier=current_user.tier

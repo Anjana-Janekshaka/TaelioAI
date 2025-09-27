@@ -6,6 +6,7 @@ from db.database import get_db
 from db.models import Usage
 from sqlalchemy.orm import Session
 from typing import Optional
+from .prom import record_request_metrics, record_usage_metrics
 
 class UsageLoggingMiddleware(BaseHTTPMiddleware):
     async def dispatch(self, request: Request, call_next):
@@ -18,11 +19,28 @@ class UsageLoggingMiddleware(BaseHTTPMiddleware):
         response = await call_next(request)
         
         elapsed_ms = int((time.time() - start) * 1000)
+        elapsed_seconds = elapsed_ms / 1000.0  # Convert to seconds for Prometheus
         path = request.url.path
         method = request.method
+        status_code = response.status_code
+        
+        # Extract user tier from request state (set by auth middleware)
+        user_tier = getattr(request.state, 'user_tier', 'unknown')
+        
+        # Record Prometheus metrics
+        try:
+            record_request_metrics(
+                method=method,
+                endpoint=path,
+                status_code=status_code,
+                user_tier=user_tier,
+                duration=elapsed_seconds
+            )
+        except Exception as e:
+            print(f"Failed to record Prometheus metrics: {e}")
         
         # Log to console
-        print(f"USAGE request_id={request_id} path={path} method={method} latency_ms={elapsed_ms}")
+        print(f"USAGE request_id={request_id} path={path} method={method} latency_ms={elapsed_ms} user_tier={user_tier}")
         
         return response
 
@@ -35,10 +53,12 @@ def log_usage(
     tokens_out: int,
     latency_ms: int,
     cost_usd: float,
-    db: Session
+    db: Session,
+    user_tier: str = "unknown"
 ):
-    """Log usage to database"""
+    """Log usage to database and Prometheus metrics"""
     try:
+        # Log to database
         usage = Usage(
             user_id=user_id,
             feature=feature,
@@ -51,6 +71,21 @@ def log_usage(
         )
         db.add(usage)
         db.commit()
+        
+        # Record Prometheus metrics
+        try:
+            record_usage_metrics(
+                provider=provider,
+                model=model,
+                feature=feature,
+                user_tier=user_tier,
+                tokens_in=tokens_in,
+                tokens_out=tokens_out,
+                cost_usd=cost_usd
+            )
+        except Exception as e:
+            print(f"Failed to record Prometheus usage metrics: {e}")
+            
     except Exception as e:
         print(f"Failed to log usage: {e}")
         db.rollback()

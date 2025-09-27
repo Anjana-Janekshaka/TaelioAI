@@ -6,18 +6,18 @@ from schemas.story import StoryRequest, StoryResponse
 from .base import GenerationResult, IdeaProvider, StoryProvider
 
 _DEFAULT_IDEA_MODEL = {
-    "free": "gemini-1.5-flash",
-    "pro": "gemini-1.5-pro"
+    "free": "gemini-2.5-flash",
+    "pro": "gemini-2.5-flash"
 }
 _DEFAULT_STORY_MODEL = {
-    "free": "gemini-1.5-flash",
-    "pro": "gemini-1.5-pro"
+    "free": "gemini-2.5-flash",
+    "pro": "gemini-2.5-flash"
 }
 
 class GeminiIdeaProvider(IdeaProvider):
     def __init__(self, tier: str):
         self.tier = tier
-        self.model_name = _DEFAULT_IDEA_MODEL.get(tier, "gemini-1.5-flash")
+        self.model_name = _DEFAULT_IDEA_MODEL.get(tier, "gemini-2.5-flash")
         api_key = os.getenv("GEMINI_API_KEY")
         if not api_key:
             raise ValueError("GEMINI_API_KEY is not set")
@@ -43,7 +43,7 @@ class GeminiIdeaProvider(IdeaProvider):
 class GeminiStoryProvider(StoryProvider):
     def __init__(self, tier: str):
         self.tier = tier
-        self.model_name = _DEFAULT_STORY_MODEL.get(tier, "gemini-1.5-flash")
+        self.model_name = _DEFAULT_STORY_MODEL.get(tier, "gemini-2.5-flash")
         api_key = os.getenv("GEMINI_API_KEY")
         if not api_key:
             raise ValueError("GEMINI_API_KEY is not set")

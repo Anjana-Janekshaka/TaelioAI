@@ -7,6 +7,7 @@ from .api_keys import create_api_key, revoke_api_key, list_user_api_keys
 from pydantic import BaseModel
 from typing import List, Optional
 from datetime import datetime
+from auth.dependencies import get_current_user
 
 router = APIRouter()
 

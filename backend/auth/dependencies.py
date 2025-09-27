@@ -25,11 +25,14 @@ async def get_current_user(
     if x_api_key:
         user = verify_api_key(x_api_key, db)
         if user:
-            return UserContext(
+            user_context = UserContext(
                 user_id=user.id,
                 email=user.email,
                 role=user.role
             )
+            # Set user tier in request state for Prometheus metrics
+            request.state.user_tier = user.role
+            return user_context
     
     # Try JWT token
     if authorization and authorization.startswith("Bearer "):
@@ -45,11 +48,14 @@ async def get_current_user(
             if not user:
                 raise HTTPException(status_code=401, detail="User not found")
             
-            return UserContext(
+            user_context = UserContext(
                 user_id=user.id,
                 email=user.email,
                 role=user.role
             )
+            # Set user tier in request state for Prometheus metrics
+            request.state.user_tier = user.role
+            return user_context
         except HTTPException:
             raise
         except Exception:
@@ -60,10 +66,13 @@ async def get_current_user(
     x_user_tier = request.headers.get("X-User-Tier", "free")
     
     if x_user_id:
-        return UserContext(
+        user_context = UserContext(
             user_id=x_user_id,
             email=f"{x_user_id}@dev.local",
             role=x_user_tier
         )
+        # Set user tier in request state for Prometheus metrics
+        request.state.user_tier = x_user_tier
+        return user_context
     
     raise HTTPException(status_code=401, detail="Authentication required")
