@@ -1,0 +1,202 @@
+import os
+import time
+import openai
+from typing import Dict, Any
+from schemas.idea import IdeaRequest, IdeaResponse
+from schemas.story import StoryRequest, StoryResponse
+from .base import GenerationResult, IdeaProvider, StoryProvider
+import json
+
+# OpenAI model configurations by tier
+_OPENAI_IDEA_MODELS = {
+    "free": "gpt-3.5-turbo",
+    "pro": "gpt-4",
+    "admin": "gpt-4"
+}
+
+_OPENAI_STORY_MODELS = {
+    "free": "gpt-3.5-turbo",
+    "pro": "gpt-4",
+    "admin": "gpt-4"
+}
+
+class OpenAIIdeaProvider(IdeaProvider):
+    def __init__(self, tier: str):
+        self.tier = tier
+        self.model_name = _OPENAI_IDEA_MODELS.get(tier, "gpt-3.5-turbo")
+        self.client = openai.OpenAI(api_key=os.getenv("OPENAI_API_KEY"))
+    
+    def generate(self, request: IdeaRequest) -> GenerationResult[IdeaResponse]:
+        start = time.time()
+        
+        # Build system prompt for idea generation
+        system_prompt = """You are a creative story idea generator. Generate compelling story ideas based on user prompts.
+        Return your response as JSON with the following structure:
+        {
+            "title": "Story Title Here",
+            "genre": "Genre Here", 
+            "outline": "Detailed outline here...",
+            "characters": "Character descriptions here...",
+            "setting": "Setting description here..."
+        }"""
+        
+        # Build user prompt
+        user_prompt = f"""
+        Generate a story idea based on:
+        - Prompt: {request.prompt}
+        - Genre: {request.genre or 'Any genre'}
+        - Tone: {request.tone or 'Any tone'}
+        
+        Make it creative, engaging, and well-structured.
+        """
+        
+        try:
+            response = self.client.chat.completions.create(
+                model=self.model_name,
+                messages=[
+                    {"role": "system", "content": system_prompt},
+                    {"role": "user", "content": user_prompt}
+                ],
+                temperature=0.8,
+                max_tokens=1000
+            )
+            
+            text = response.choices[0].message.content
+            tokens_in = response.usage.prompt_tokens
+            tokens_out = response.usage.completion_tokens
+            latency_ms = int((time.time() - start) * 1000)
+            
+            # Calculate cost (rough estimates)
+            cost_usd = self._calculate_cost(tokens_in, tokens_out)
+            
+            # Parse JSON response
+            try:
+                idea_data = json.loads(text)
+                output = IdeaResponse(
+                    title=idea_data.get("title", "Untitled Story"),
+                    genre=idea_data.get("genre", request.genre or "General"),
+                    outline=idea_data.get("outline", "No outline provided"),
+                    characters=idea_data.get("characters"),
+                    setting=idea_data.get("setting")
+                )
+            except json.JSONDecodeError:
+                # Fallback parsing
+                output = self._parse_text_response(text, request)
+            
+            return GenerationResult(
+                output=output,
+                provider="openai",
+                model=self.model_name,
+                tokens_in=tokens_in,
+                tokens_out=tokens_out,
+                latency_ms=latency_ms,
+                cost_usd=cost_usd
+            )
+            
+        except Exception as e:
+            raise Exception(f"OpenAI API error: {str(e)}")
+    
+    def _parse_text_response(self, text: str, request: IdeaRequest) -> IdeaResponse:
+        """Fallback text parsing when JSON fails"""
+        lines = text.split('\n')
+        title = "Generated Story Idea"
+        genre = request.genre or "General"
+        
+        # Try to extract title
+        for line in lines:
+            if 'title' in line.lower() and ':' in line:
+                title = line.split(':', 1)[1].strip()
+                break
+        
+        return IdeaResponse(
+            title=title,
+            genre=genre,
+            outline=text,
+            characters=None,
+            setting=None
+        )
+    
+    def _calculate_cost(self, tokens_in: int, tokens_out: int) -> float:
+        """Calculate cost based on OpenAI pricing"""
+        # GPT-4 pricing (as of 2024)
+        if "gpt-4" in self.model_name:
+            input_cost = tokens_in * 0.00003  # $0.03 per 1K tokens
+            output_cost = tokens_out * 0.00006  # $0.06 per 1K tokens
+        else:  # GPT-3.5-turbo
+            input_cost = tokens_in * 0.0000015  # $0.0015 per 1K tokens
+            output_cost = tokens_out * 0.000002  # $0.002 per 1K tokens
+        
+        return input_cost + output_cost
+
+class OpenAIStoryProvider(StoryProvider):
+    def __init__(self, tier: str):
+        self.tier = tier
+        self.model_name = _OPENAI_STORY_MODELS.get(tier, "gpt-3.5-turbo")
+        self.client = openai.OpenAI(api_key=os.getenv("OPENAI_API_KEY"))
+    
+    def generate(self, request: StoryRequest) -> GenerationResult[StoryResponse]:
+        start = time.time()
+        
+        # Build system prompt for story writing
+        system_prompt = """You are a professional story writer. Write engaging, well-structured stories with proper narrative flow, character development, and satisfying conclusions."""
+        
+        # Build user prompt
+        user_prompt = f"""
+        Write a complete story with the following details:
+        - Title: {request.title}
+        - Genre: {request.genre}
+        - Outline: {request.outline}
+        
+        Structure the story with:
+        - Introduction and character setup
+        - Rising action and conflict
+        - Climax and resolution
+        - Proper dialogue and descriptions
+        
+        Make it engaging and well-written.
+        """
+        
+        try:
+            response = self.client.chat.completions.create(
+                model=self.model_name,
+                messages=[
+                    {"role": "system", "content": system_prompt},
+                    {"role": "user", "content": user_prompt}
+                ],
+                temperature=0.7,
+                max_tokens=2000
+            )
+            
+            text = response.choices[0].message.content
+            tokens_in = response.usage.prompt_tokens
+            tokens_out = response.usage.completion_tokens
+            latency_ms = int((time.time() - start) * 1000)
+            
+            # Calculate cost
+            cost_usd = self._calculate_cost(tokens_in, tokens_out)
+            
+            output = StoryResponse(story=text)
+            
+            return GenerationResult(
+                output=output,
+                provider="openai",
+                model=self.model_name,
+                tokens_in=tokens_in,
+                tokens_out=tokens_out,
+                latency_ms=latency_ms,
+                cost_usd=cost_usd
+            )
+            
+        except Exception as e:
+            raise Exception(f"OpenAI API error: {str(e)}")
+    
+    def _calculate_cost(self, tokens_in: int, tokens_out: int) -> float:
+        """Calculate cost based on OpenAI pricing"""
+        if "gpt-4" in self.model_name:
+            input_cost = tokens_in * 0.00003
+            output_cost = tokens_out * 0.00006
+        else:  # GPT-3.5-turbo
+            input_cost = tokens_in * 0.0000015
+            output_cost = tokens_out * 0.000002
+        
+        return input_cost + output_cost
