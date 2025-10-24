@@ -15,8 +15,8 @@ def generate_story(request: StoryRequest) -> StoryResponse:
     genai.configure(api_key=api_key)
     
     try:
-        # Try different model names as they may have changed
-        model_names = ["gemini-1.5-pro", "gemini-1.5-flash", "gemini-pro"]
+        # Use the most basic and widely available model
+        model_names = ["gemini-pro"]
         
         model = None
         for model_name in model_names:
@@ -29,7 +29,21 @@ def generate_story(request: StoryRequest) -> StoryResponse:
                 continue
         
         if not model:
-            raise Exception("No available Gemini model found. Please check your API access.")  
+            # Try to list available models for debugging
+            try:
+                models = genai.list_models()
+                available_models = [m.name for m in models if 'generateContent' in m.supported_generation_methods]
+                print(f"Available models: {available_models}")
+                # Try the first available model
+                if available_models:
+                    first_model = available_models[0].split('/')[-1]  # Get just the model name
+                    print(f"Trying first available model: {first_model}")
+                    model = genai.GenerativeModel(first_model)
+            except Exception as list_error:
+                print(f"Could not list models: {list_error}")
+            
+            if not model:
+                raise Exception("No available Gemini model found. Please check your API access.")  
 
         prompt = f"""
         You are a professional story writer.
