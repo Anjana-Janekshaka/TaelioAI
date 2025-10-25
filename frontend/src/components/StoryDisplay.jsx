@@ -92,3 +92,4 @@ const StoryDisplay = ({ story, onNewStory }) => {
 }
 
 export default StoryDisplay
+
