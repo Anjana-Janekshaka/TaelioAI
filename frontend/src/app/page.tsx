@@ -7,12 +7,16 @@ import Header from "@/components/Header";
 import Hero from "@/components/Hero";
 import IdeaGenerator from "@/components/IdeaGenerator";
 import StoryWriter from "@/components/StoryWriter";
+import StoryEditor from "@/components/StoryEditor";
 import WorkflowSelector from "@/components/WorkflowSelector";
 import Features from "@/components/Features";
 import Footer from "@/components/Footer";
 
 export default function Home() {
   const [activeTab, setActiveTab] = useState("idea");
+  const [generatedStory, setGeneratedStory] = useState<string>("");
+  const [storyTitle, setStoryTitle] = useState<string>("");
+  const [storyGenre, setStoryGenre] = useState<string>("");
 
   return (
     <div className="min-h-screen">
@@ -38,8 +42,22 @@ export default function Home() {
           className="mt-8"
         >
           {activeTab === "idea" && <IdeaGenerator />}
-          {activeTab === "story" && <StoryWriter />}
-          {activeTab === "workflow" && <div>Full Workflow Coming Soon...</div>}
+          {activeTab === "story" && (
+            <StoryWriter 
+              onStoryGenerated={(story, title, genre) => {
+                setGeneratedStory(story);
+                setStoryTitle(title);
+                setStoryGenre(genre);
+              }}
+            />
+          )}
+          {activeTab === "workflow" && (
+            <StoryEditor 
+              story={generatedStory} 
+              title={storyTitle} 
+              genre={storyGenre} 
+            />
+          )}
         </motion.div>
 
         <Features />

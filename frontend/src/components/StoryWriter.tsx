@@ -1,11 +1,15 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { motion } from "framer-motion";
 import { PenTool, BookOpen, Copy, Download, RefreshCw, Save, AlertCircle } from "lucide-react";
 import { useStoryWriting } from "@/hooks/useApi";
 
-export default function StoryWriter() {
+interface StoryWriterProps {
+  onStoryGenerated?: (story: string, title: string, genre: string) => void;
+}
+
+export default function StoryWriter({ onStoryGenerated }: StoryWriterProps) {
   const [title, setTitle] = useState("");
   const [genre, setGenre] = useState("Fantasy");
   const [tone, setTone] = useState("Adventurous");
@@ -16,6 +20,13 @@ export default function StoryWriter() {
 
   const genres = ["Fantasy", "Science Fiction", "Mystery", "Romance", "Horror", "Thriller", "Adventure", "Drama"];
   const tones = ["Adventurous", "Dark", "Light-hearted", "Mysterious", "Romantic", "Gritty", "Whimsical", "Dramatic"];
+
+  // Call the callback when a story is generated
+  useEffect(() => {
+    if (story && story.story && onStoryGenerated) {
+      onStoryGenerated(story.story, title, genre);
+    }
+  }, [story, title, genre, onStoryGenerated]);
 
   const handleGenerate = async () => {
     if (!title.trim()) return;
