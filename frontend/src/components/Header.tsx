@@ -1,7 +1,7 @@
 "use client";
 
 import { motion } from "framer-motion";
-import { Sparkles, Menu, X, User, LogOut, Crown, Zap } from "lucide-react";
+import { Sparkles, Menu, X, User, LogOut, Crown, Zap, BarChart3 } from "lucide-react";
 import { useState, useEffect, useRef } from "react";
 import { useAuth } from "@/contexts/AuthContext";
 import { useRouter } from "next/navigation";
@@ -99,6 +99,12 @@ export default function Header() {
             <a href="#workflow" className="text-gray-600 hover:text-blue-600 transition-colors">
               Workflow
             </a>
+            {isAuthenticated && (
+              <a href="/metrics" className="text-gray-600 hover:text-blue-600 transition-colors flex items-center space-x-1">
+                <BarChart3 className="h-4 w-4" />
+                <span>Metrics</span>
+              </a>
+            )}
             <a href="#about" className="text-gray-600 hover:text-blue-600 transition-colors">
               About
             </a>
@@ -152,6 +158,10 @@ export default function Header() {
                     </div>
                     
                     <div className="py-2">
+                      <a href="/metrics" className="w-full px-4 py-2 text-left text-gray-700 hover:bg-gray-50 flex items-center space-x-2">
+                        <BarChart3 className="h-4 w-4" />
+                        <span>Metrics</span>
+                      </a>
                       <button className="w-full px-4 py-2 text-left text-gray-700 hover:bg-gray-50 flex items-center space-x-2">
                         <User className="h-4 w-4" />
                         <span>Profile</span>
@@ -216,6 +226,12 @@ export default function Header() {
               <a href="#workflow" className="text-gray-600 hover:text-blue-600 transition-colors">
                 Workflow
               </a>
+              {isAuthenticated && (
+                <a href="/metrics" className="text-gray-600 hover:text-blue-600 transition-colors flex items-center space-x-2">
+                  <BarChart3 className="h-4 w-4" />
+                  <span>Metrics</span>
+                </a>
+              )}
               <a href="#about" className="text-gray-600 hover:text-blue-600 transition-colors">
                 About
               </a>
@@ -237,6 +253,10 @@ export default function Header() {
                   </div>
                   
                   <div className="space-y-2">
+                    <a href="/metrics" className="w-full px-4 py-2 text-left text-gray-700 hover:bg-gray-50 rounded-lg flex items-center space-x-2">
+                      <BarChart3 className="h-4 w-4" />
+                      <span>Metrics</span>
+                    </a>
                     <button className="w-full px-4 py-2 text-left text-gray-700 hover:bg-gray-50 rounded-lg flex items-center space-x-2">
                       <User className="h-4 w-4" />
                       <span>Profile</span>

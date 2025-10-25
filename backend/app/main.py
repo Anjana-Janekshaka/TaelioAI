@@ -12,6 +12,7 @@ from api.routes import multi_agent_workflow as multi_agent_routes
 from api.routes import provider_management as provider_routes
 from api.routes import admin as admin_routes
 from api.routes import user as user_routes
+from api.routes import moderation_metrics as moderation_metrics_routes
 from auth.routes import router as auth_routes
 from metrics.usage import UsageLoggingMiddleware
 from metrics.prom import create_metrics_response
@@ -56,6 +57,7 @@ app.include_router(multi_agent_routes.router, prefix="/multi-agent", tags=["Mult
 app.include_router(provider_routes.router, prefix="/providers", tags=["Provider Management"])
 app.include_router(user_routes.router, prefix="/user", tags=["User"])
 app.include_router(admin_routes.router, prefix="/admin", tags=["Admin"])
+app.include_router(moderation_metrics_routes.router, prefix="/moderation", tags=["Content Moderation Metrics"])
 
 @app.get("/")
 async def root():
@@ -69,7 +71,8 @@ async def root():
             "legacy_workflow": "/workflow/generate-full-story",
             "multi_agent_workflow": "/multi-agent/orchestrated-workflow",
             "system_status": "/multi-agent/system-status",
-            "provider_management": "/providers/available"
+            "provider_management": "/providers/available",
+            "moderation_metrics": "/moderation/metrics"
         }
     }
 
