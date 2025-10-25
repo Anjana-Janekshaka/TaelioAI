@@ -152,7 +152,29 @@ class GeminiStoryProvider(StoryProvider):
 
     def generate(self, request: StoryRequest) -> GenerationResult[StoryResponse]:
         start = time.time()
-        prompt = f"You are a professional story writer. Title: {request.title}\nGenre: {request.genre}\nOutline: {request.outline}\nWrite a structured story."
+        
+        # Build prompt with optional fields
+        prompt_parts = [
+            "You are a professional story writer.",
+            f"Title: {request.title}",
+            f"Genre: {request.genre}",
+            f"Outline: {request.outline}"
+        ]
+        
+        if request.tone:
+            prompt_parts.append(f"Tone: {request.tone}")
+        if request.characters:
+            prompt_parts.append(f"Characters: {request.characters}")
+        if request.setting:
+            prompt_parts.append(f"Setting: {request.setting}")
+        
+        prompt_parts.append("Write a structured story with proper narrative flow, character development, and satisfying conclusion.")
+        
+        if request.tone or request.characters or request.setting:
+            prompt_parts.append("Ensure the story matches the provided tone, characters, and setting details above.")
+        
+        prompt = "\n".join(prompt_parts)
+        
         resp = self.model.generate_content(prompt)
         text = getattr(resp, 'text', None) or ""
         tokens_in = max(1, len(prompt.split())//0.75)

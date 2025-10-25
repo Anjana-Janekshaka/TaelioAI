@@ -1,34 +1,51 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { motion } from "framer-motion";
 import { PenTool, BookOpen, Copy, Download, RefreshCw, Save, AlertCircle } from "lucide-react";
-import { useStoryWriting } from "@/hooks/useApi";
+import { useStreamingStoryWriting } from "@/hooks/useApi";
 
-export default function StoryWriter() {
+interface StoryWriterProps {
+  onStoryGenerated?: (story: string, title: string, genre: string) => void;
+}
+
+export default function StoryWriter({ onStoryGenerated }: StoryWriterProps) {
   const [title, setTitle] = useState("");
   const [genre, setGenre] = useState("Fantasy");
   const [tone, setTone] = useState("Adventurous");
   const [outline, setOutline] = useState("");
   const [characters, setCharacters] = useState("");
   const [setting, setSetting] = useState("");
-  const { story, loading, error, writeStory, reset } = useStoryWriting();
+  const [streamingSpeed, setStreamingSpeed] = useState("normal");
+  const { story, loading, error, metadata, writeStoryStreaming, reset } = useStreamingStoryWriting();
 
   const genres = ["Fantasy", "Science Fiction", "Mystery", "Romance", "Horror", "Thriller", "Adventure", "Drama"];
   const tones = ["Adventurous", "Dark", "Light-hearted", "Mysterious", "Romantic", "Gritty", "Whimsical", "Dramatic"];
+  const streamingSpeeds = [
+    { value: "slow", label: "Slow (More Realistic)" },
+    { value: "normal", label: "Normal" },
+    { value: "fast", label: "Fast" }
+  ];
+
+  // Call the callback when a story is generated
+  useEffect(() => {
+    if (story && onStoryGenerated) {
+      onStoryGenerated(story, title, genre);
+    }
+  }, [story, title, genre, onStoryGenerated]);
 
   const handleGenerate = async () => {
     if (!title.trim()) return;
     
     try {
-      await writeStory({
+      await writeStoryStreaming({
         title,
         genre,
         tone,
         outline,
         characters,
         setting
-      });
+      }, streamingSpeed);
     } catch (error) {
       console.error('Error writing story:', error);
     }
@@ -39,10 +56,10 @@ export default function StoryWriter() {
   };
 
   const downloadStory = () => {
-    if (!story || !story.story) return;
+    if (!story) return;
     
     const element = document.createElement('a');
-    const file = new Blob([story.story], { type: 'text/plain' });
+    const file = new Blob([story], { type: 'text/plain' });
     element.href = URL.createObjectURL(file);
     element.download = `${(title || 'story').replace(/\s+/g, '_')}.txt`;
     document.body.appendChild(element);
@@ -112,6 +129,27 @@ export default function StoryWriter() {
 
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-2">
+                Streaming Speed
+              </label>
+              <select
+                value={streamingSpeed}
+                onChange={(e) => setStreamingSpeed(e.target.value)}
+                className="w-full p-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-purple-500 focus:border-transparent"
+                disabled={loading}
+              >
+                {streamingSpeeds.map((speed) => (
+                  <option key={speed.value} value={speed.value}>{speed.label}</option>
+                ))}
+              </select>
+              <p className="text-xs text-gray-500 mt-1">
+                {streamingSpeed === "slow" && "More realistic typing speed with natural pauses"}
+                {streamingSpeed === "normal" && "Balanced speed for good readability"}
+                {streamingSpeed === "fast" && "Quick generation for impatient users"}
+              </p>
+            </div>
+
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">
                 Story Outline (Optional)
               </label>
               <textarea
@@ -164,7 +202,7 @@ export default function StoryWriter() {
               ) : (
                 <>
                   <BookOpen className="h-5 w-5" />
-                  <span>Write Story</span>
+                  <span>Write Story (Streaming)</span>
                 </>
               )}
             </motion.button>
@@ -205,10 +243,15 @@ export default function StoryWriter() {
                     </div>
                   </div>
                   <div className="flex items-center justify-between text-sm text-gray-600">
-                    <span>{(story.story || "").split(/\s+/).length} words</span>
+                    <span>{story.split(/\s+/).length} words</span>
+                    {metadata && (
+                      <span className="text-xs text-gray-500">
+                        {metadata.provider} • {metadata.model}
+                      </span>
+                    )}
                     <div className="flex space-x-2">
                       <button
-                        onClick={() => copyToClipboard(story.story || "")}
+                        onClick={() => copyToClipboard(story)}
                         className="p-2 hover:bg-white/50 rounded-lg transition-colors"
                         title="Copy story"
                       >
@@ -239,8 +282,12 @@ export default function StoryWriter() {
                            fontSize: '1.125rem',
                            lineHeight: '1.875rem'
                          }}
-                         dangerouslySetInnerHTML={{ __html: (story.story || "No content available").replace(/\n/g, '<br/>') }} 
-                    />
+                    >
+                      {story}
+                      {loading && (
+                        <span className="inline-block w-2 h-5 bg-purple-500 ml-1 animate-pulse" />
+                      )}
+                    </div>
                   </div>
                 </div>
               </motion.div>

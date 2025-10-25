@@ -13,6 +13,7 @@ from api.routes import provider_management as provider_routes
 from api.routes import admin as admin_routes
 from api.routes import user as user_routes
 from api.routes import moderation_metrics as moderation_metrics_routes
+from api.routes import story_editor as story_editor_routes
 from auth.routes import router as auth_routes
 from metrics.usage import UsageLoggingMiddleware
 from metrics.prom import create_metrics_response
@@ -69,6 +70,7 @@ app.include_router(provider_routes.router, prefix="/providers", tags=["Provider 
 app.include_router(user_routes.router, prefix="/user", tags=["User"])
 app.include_router(admin_routes.router, prefix="/admin", tags=["Admin"])
 app.include_router(moderation_metrics_routes.router, prefix="/moderation", tags=["Content Moderation Metrics"])
+app.include_router(story_editor_routes.router, prefix="/story-editor", tags=["Story Editor"])
 
 @app.get("/")
 async def root():
