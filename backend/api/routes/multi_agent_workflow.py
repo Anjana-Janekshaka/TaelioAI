@@ -36,19 +36,23 @@ async def execute_orchestrated_workflow(
             user_tier=current_user.tier
         )
         
-        # Log usage for each step
+        # Log usage for each step using real agent metrics
         for step in result.get("workflow_steps", []):
+            # Extract real metrics from agent response metadata
+            agent_response = step.get("agent_response")
+            metadata = agent_response.metadata if agent_response else {}
+            
             log_usage(
                 user_id=current_user.user_id,
                 feature=step["agent_type"],
-                provider="multi_agent",
-                model=f"agent_{step['agent_id']}",
-                tokens_in=0,  # Will be updated by individual agents
-                tokens_out=0,  # Will be updated by individual agents
-                latency_ms=step["execution_time_ms"],
-                cost_usd=0.0,  # Will be calculated by individual agents
+                provider=metadata.get("provider", "unknown"),  # Real provider (e.g., "gemini")
+                model=metadata.get("model", "unknown"),        # Real model (e.g., "gemini-2.5-flash")
+                tokens_in=metadata.get("tokens_in", 0),        # Real input tokens
+                tokens_out=metadata.get("tokens_out", 0),      # Real output tokens
+                latency_ms=step["execution_time_ms"],          # Real execution time
+                cost_usd=metadata.get("cost_usd", 0.0),        # Real cost
                 db=db,
-                user_tier=current_user.tier  # Pass user tier for Prometheus metrics
+                user_tier=current_user.tier
             )
         
         logger.info(f"Orchestrated workflow completed successfully: {result['workflow_id']}")
@@ -89,6 +93,25 @@ async def generate_full_story_orchestrated(
             user_tier=current_user.tier
         )
         
+        # Log usage for each step using real agent metrics
+        for step in result.get("workflow_steps", []):
+            # Extract real metrics from agent response metadata
+            agent_response = step.get("agent_response")
+            metadata = agent_response.metadata if agent_response else {}
+            
+            log_usage(
+                user_id=current_user.user_id,
+                feature=step["agent_type"],
+                provider=metadata.get("provider", "unknown"),  # Real provider (e.g., "gemini")
+                model=metadata.get("model", "unknown"),        # Real model (e.g., "gemini-2.5-flash")
+                tokens_in=metadata.get("tokens_in", 0),        # Real input tokens
+                tokens_out=metadata.get("tokens_out", 0),      # Real output tokens
+                latency_ms=step["execution_time_ms"],          # Real execution time
+                cost_usd=metadata.get("cost_usd", 0.0),        # Real cost
+                db=db,
+                user_tier=current_user.tier
+            )
+        
         logger.info(f"Full story generation completed: {result['workflow_id']}")
         return result
         
@@ -118,6 +141,25 @@ async def generate_idea_only_orchestrated(
             user_id=current_user.user_id,
             user_tier=current_user.tier
         )
+        
+        # Log usage for each step using real agent metrics
+        for step in result.get("workflow_steps", []):
+            # Extract real metrics from agent response metadata
+            agent_response = step.get("agent_response")
+            metadata = agent_response.metadata if agent_response else {}
+            
+            log_usage(
+                user_id=current_user.user_id,
+                feature=step["agent_type"],
+                provider=metadata.get("provider", "unknown"),  # Real provider (e.g., "gemini")
+                model=metadata.get("model", "unknown"),        # Real model (e.g., "gemini-2.5-flash")
+                tokens_in=metadata.get("tokens_in", 0),        # Real input tokens
+                tokens_out=metadata.get("tokens_out", 0),      # Real output tokens
+                latency_ms=step["execution_time_ms"],          # Real execution time
+                cost_usd=metadata.get("cost_usd", 0.0),        # Real cost
+                db=db,
+                user_tier=current_user.tier
+            )
         
         logger.info(f"Idea generation completed: {result['workflow_id']}")
         return result

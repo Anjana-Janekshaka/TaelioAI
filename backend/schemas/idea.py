@@ -1,5 +1,5 @@
 from pydantic import BaseModel
-from typing import Optional
+from typing import Optional, List
 
 class IdeaRequest(BaseModel):
     prompt: str
@@ -9,6 +9,7 @@ class IdeaRequest(BaseModel):
 class IdeaResponse(BaseModel):
     title: str
     genre: str
+    tone: str
     outline: str
-    characters: Optional[str] = None
+    characters: Optional[List[str]] = None
     setting: Optional[str] = None
