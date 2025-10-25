@@ -1,11 +1,12 @@
 import os
 import time
 import anthropic
-from typing import Dict, Any
+from typing import Dict, Any, AsyncGenerator
 from schemas.idea import IdeaRequest, IdeaResponse
 from schemas.story import StoryRequest, StoryResponse
 from .base import GenerationResult, IdeaProvider, StoryProvider
 import json
+import asyncio
 
 # Anthropic model configurations by tier
 _ANTHROPIC_IDEA_MODELS = {
@@ -211,3 +212,93 @@ class AnthropicStoryProvider(StoryProvider):
             output_cost = tokens_out * 0.00000125
         
         return input_cost + output_cost
+
+    async def generate_streaming(self, request: StoryRequest) -> AsyncGenerator[Dict[str, Any], None]:
+        """Generate story with streaming support"""
+        start = time.time()
+        
+        # Build system prompt for story writing
+        system_prompt = """You are a professional story writer. Write engaging, well-structured stories with proper narrative flow, character development, and satisfying conclusions."""
+        
+        # Build user prompt with optional fields
+        optional_details = []
+        if request.tone:
+            optional_details.append(f"- Tone: {request.tone}")
+        if request.characters:
+            optional_details.append(f"- Characters: {request.characters}")
+        if request.setting:
+            optional_details.append(f"- Setting: {request.setting}")
+        
+        optional_section = "\n".join(optional_details) if optional_details else ""
+        
+        user_prompt = f"""
+        Write a complete story with the following details:
+        - Title: {request.title}
+        - Genre: {request.genre}
+        - Outline: {request.outline}
+        {optional_section}
+        
+        Structure the story with:
+        - Introduction and character setup
+        - Rising action and conflict
+        - Climax and resolution
+        - Proper dialogue and descriptions
+        
+        Make it engaging and well-written.{" When provided, ensure the tone, characters, and setting match the details above." if optional_section else ""}
+        """
+        
+        try:
+            # Use streaming API
+            with self.client.messages.stream(
+                model=self.model_name,
+                max_tokens=2000,
+                temperature=0.7,
+                system=system_prompt,
+                messages=[
+                    {"role": "user", "content": user_prompt}
+                ]
+            ) as stream:
+                full_content = ""
+                tokens_in = 0
+                tokens_out = 0
+                
+                for chunk in stream.text_stream:
+                    if chunk:
+                        full_content += chunk
+                        tokens_out += 1  # Rough estimate
+                        
+                        yield {
+                            'type': 'content',
+                            'content': chunk,
+                            'is_final': False
+                        }
+                        
+                        # Add small delay to make streaming more readable
+                        await asyncio.sleep(0.02)
+                
+                # Get final usage information
+                final_message = stream.get_final_message()
+                if hasattr(final_message, 'usage'):
+                    tokens_in = final_message.usage.input_tokens
+                    tokens_out = final_message.usage.output_tokens
+            
+            # Send final metadata
+            latency_ms = int((time.time() - start) * 1000)
+            cost_usd = self._calculate_cost(tokens_in, tokens_out)
+            
+            yield {
+                'type': 'metadata',
+                'provider': 'anthropic',
+                'model': self.model_name,
+                'tokens_in': tokens_in,
+                'tokens_out': tokens_out,
+                'latency_ms': latency_ms,
+                'cost_usd': cost_usd,
+                'is_final': True
+            }
+            
+        except Exception as e:
+            yield {
+                'type': 'error',
+                'error': f"Anthropic streaming API error: {str(e)}"
+            }

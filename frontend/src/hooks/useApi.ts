@@ -78,6 +78,60 @@ export function useStoryWriting() {
   };
 }
 
+export function useStreamingStoryWriting() {
+  const [story, setStory] = useState<string>('');
+  const [loading, setLoading] = useState<boolean>(false);
+  const [error, setError] = useState<string | null>(null);
+  const [metadata, setMetadata] = useState<any>(null);
+
+  const writeStoryStreaming = useCallback(async (request: {
+    title: string;
+    genre: string;
+    tone?: string;
+    outline?: string;
+    characters?: string;
+    setting?: string;
+  }, streamingSpeed: string = "normal") => {
+    setLoading(true);
+    setError(null);
+    setStory('');
+    setMetadata(null);
+
+    try {
+      await apiService.writeStoryStreaming(request, (chunk) => {
+        if (chunk.type === 'content') {
+          setStory(prev => prev + chunk.content);
+        } else if (chunk.type === 'metadata') {
+          setMetadata(chunk);
+        } else if (chunk.type === 'error') {
+          setError(chunk.error);
+        } else if (chunk.type === 'complete') {
+          setLoading(false);
+        }
+      }, streamingSpeed);
+    } catch (err: any) {
+      setError(err.message || 'An error occurred');
+      setLoading(false);
+    }
+  }, []);
+
+  const reset = useCallback(() => {
+    setStory('');
+    setLoading(false);
+    setError(null);
+    setMetadata(null);
+  }, []);
+
+  return {
+    story,
+    loading,
+    error,
+    metadata,
+    writeStoryStreaming,
+    reset,
+  };
+}
+
 export function useFullWorkflow() {
   const { data, loading, error, execute, reset } = useApi();
 
