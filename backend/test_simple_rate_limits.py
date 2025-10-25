@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-Test script to demonstrate rate limiting functionality
+Simple rate limiting test that doesn't require story generation
 """
 
 import requests
@@ -9,11 +9,11 @@ import time
 
 # Test configuration
 BASE_URL = "http://localhost:8000"
-TEST_EMAIL = "ratelimit_test@example.com"
+TEST_EMAIL = "ratelimit_simple@example.com"
 
-def test_rate_limiting():
-    """Test rate limiting functionality"""
-    print("Testing Rate Limiting System")
+def test_simple_rate_limiting():
+    """Test rate limiting with simple API calls"""
+    print("Testing Simple Rate Limiting System")
     print("=" * 50)
     
     # Step 1: Register a test user
@@ -43,33 +43,24 @@ def test_rate_limiting():
         print(f"Registration error: {e}")
         return
     
-    # Step 2: Test rate limiting with story generation
-    print(f"\n2. Testing rate limiting with story generation...")
+    # Step 2: Test rate limiting with rapid API calls
+    print(f"\n2. Testing rate limiting with rapid API calls...")
     print(f"   Free tier limits: {limits['requests_per_day']} requests/day, {limits['requests_per_minute']} requests/minute")
     
     headers = {"Authorization": f"Bearer {token}"}
-    story_requests = []
     
     # Test multiple rapid requests to trigger rate limiting
-    for i in range(5):  # Try 5 requests rapidly
-        print(f"\n   Request {i+1}/5:")
-        story_data = {
-            "title": f"Test Story {i+1}",
-            "genre": "fantasy",
-            "length": "short",
-            "style": "adventure"
-        }
+    for i in range(10):  # Try 10 requests rapidly
+        print(f"\n   Request {i+1}/10:")
         
         try:
             start_time = time.time()
-            response = requests.post(f"{BASE_URL}/story/write-story", 
-                                   json=story_data, 
-                                   headers=headers)
+            # Use a simple endpoint that doesn't require AI generation
+            response = requests.get(f"{BASE_URL}/user/me/profile", headers=headers)
             end_time = time.time()
             
             if response.status_code == 200:
                 print(f"     Success (took {end_time - start_time:.2f}s)")
-                story_requests.append(response.json())
             elif response.status_code == 429:
                 rate_limit_data = response.json()
                 print(f"     Rate limit exceeded!")
@@ -85,7 +76,7 @@ def test_rate_limiting():
             break
         
         # Small delay between requests
-        time.sleep(1)
+        time.sleep(0.5)
     
     # Step 3: Check usage metrics
     print(f"\n3. Checking usage metrics...")
@@ -129,4 +120,4 @@ def test_rate_limiting():
     print(f"7. Graceful error handling with retry information")
 
 if __name__ == "__main__":
-    test_rate_limiting()
+    test_simple_rate_limiting()
