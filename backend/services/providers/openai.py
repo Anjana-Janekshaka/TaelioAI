@@ -140,12 +140,23 @@ class OpenAIStoryProvider(StoryProvider):
         # Build system prompt for story writing
         system_prompt = """You are a professional story writer. Write engaging, well-structured stories with proper narrative flow, character development, and satisfying conclusions."""
         
-        # Build user prompt
+        # Build user prompt with optional fields
+        optional_details = []
+        if request.tone:
+            optional_details.append(f"- Tone: {request.tone}")
+        if request.characters:
+            optional_details.append(f"- Characters: {request.characters}")
+        if request.setting:
+            optional_details.append(f"- Setting: {request.setting}")
+        
+        optional_section = "\n".join(optional_details) if optional_details else ""
+        
         user_prompt = f"""
         Write a complete story with the following details:
         - Title: {request.title}
         - Genre: {request.genre}
         - Outline: {request.outline}
+        {optional_section}
         
         Structure the story with:
         - Introduction and character setup
@@ -153,7 +164,7 @@ class OpenAIStoryProvider(StoryProvider):
         - Climax and resolution
         - Proper dialogue and descriptions
         
-        Make it engaging and well-written.
+        Make it engaging and well-written.{" When provided, ensure the tone, characters, and setting match the details above." if optional_section else ""}
         """
         
         try:

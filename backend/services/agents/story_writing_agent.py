@@ -55,11 +55,14 @@ class StoryWritingAgent(BaseAgent):
                     execution_time_ms=0
                 )
             
-            # Create story request
+            # Create story request with optional fields
             story_request = StoryRequest(
                 title=input_data["title"],
                 genre=input_data["genre"],
-                outline=input_data["outline"]
+                outline=input_data["outline"],
+                tone=input_data.get("tone"),
+                characters=input_data.get("characters"),
+                setting=input_data.get("setting")
             )
             
             # Generate story using provider router
