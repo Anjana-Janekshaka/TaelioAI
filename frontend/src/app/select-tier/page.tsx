@@ -40,6 +40,24 @@ export default function SelectTierPage() {
       gradient: "from-gray-50 to-gray-100"
     },
     {
+      id: "premium",
+      name: "Premium",
+      price: "$9",
+      description: "For regular writers",
+      features: [
+        "5 requests per minute",
+        "Enhanced AI assistance",
+        "Extended genres & tones",
+        "Email support",
+        "Moderate rate limits",
+        "Better model access",
+        "Advanced features"
+      ],
+      icon: Crown,
+      color: "from-purple-500 to-purple-600",
+      gradient: "from-purple-50 to-purple-100"
+    },
+    {
       id: "pro",
       name: "Pro",
       price: "$19",
@@ -93,7 +111,7 @@ export default function SelectTierPage() {
         </motion.div>
 
         {/* Tier Cards */}
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-8 mb-12 max-w-4xl mx-auto">
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-8 mb-12 max-w-6xl mx-auto">
           {tiers.map((tier, index) => (
             <motion.div
               key={tier.id}
