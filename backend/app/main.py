@@ -16,9 +16,17 @@ from api.routes import moderation_metrics as moderation_metrics_routes
 from auth.routes import router as auth_routes
 from metrics.usage import UsageLoggingMiddleware
 from metrics.prom import create_metrics_response
+from middleware.rate_limiter import RateLimitMiddleware
+from db.models import Base
+from db.database import engine
 
 # Load environment variables from .env file
 load_dotenv()
+
+# Initialize database tables
+print("Initializing database...")
+Base.metadata.create_all(bind=engine)
+print("Database tables created successfully!")
 
 # Check if required environment variables are set
 api_key = os.getenv("GEMINI_API_KEY")
@@ -47,6 +55,9 @@ app.add_middleware(
 
 # Usage logging middleware (basic)
 app.add_middleware(UsageLoggingMiddleware)
+
+# Rate limiting middleware
+app.add_middleware(RateLimitMiddleware)
 
 # Include all routers
 app.include_router(auth_routes, prefix="/auth", tags=["Authentication"])

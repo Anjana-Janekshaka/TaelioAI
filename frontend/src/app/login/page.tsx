@@ -29,12 +29,16 @@ export default function LoginPage() {
       localStorage.setItem('user_id', response.user_id);
       localStorage.setItem('user_email', response.email);
       localStorage.setItem('user_role', response.role);
+      localStorage.setItem('user_tier', response.tier);
+      localStorage.setItem('user_limits', JSON.stringify(response.limits));
       
       // Update auth context
       login({
         id: response.user_id,
         email: response.email,
-        role: response.role
+        role: response.role,
+        tier: response.tier,
+        limits: response.limits
       });
       
       router.push('/');

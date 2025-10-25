@@ -6,6 +6,8 @@ interface User {
   id: string;
   email: string;
   role: string;
+  tier?: string;
+  limits?: Record<string, any>;
 }
 
 interface AuthContextType {
@@ -30,12 +32,16 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         const userId = localStorage.getItem('user_id');
         const userEmail = localStorage.getItem('user_email');
         const userRole = localStorage.getItem('user_role');
+        const userTier = localStorage.getItem('user_tier');
+        const userLimits = localStorage.getItem('user_limits');
 
         if (token && userId && userEmail && userRole) {
           setUser({
             id: userId,
             email: userEmail,
-            role: userRole
+            role: userRole,
+            tier: userTier || undefined,
+            limits: userLimits ? JSON.parse(userLimits) : undefined
           });
         }
       } catch (error) {
@@ -59,6 +65,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     localStorage.removeItem('user_id');
     localStorage.removeItem('user_email');
     localStorage.removeItem('user_role');
+    localStorage.removeItem('user_tier');
+    localStorage.removeItem('user_limits');
     
     // Clear user state
     setUser(null);

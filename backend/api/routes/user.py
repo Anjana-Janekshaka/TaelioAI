@@ -3,6 +3,7 @@ from sqlalchemy.orm import Session
 from db.database import get_db
 from auth.dependencies import get_current_user, UserContext
 from metrics.usage import get_user_usage_summary
+from services.usage_tracker import UsageTracker
 from pydantic import BaseModel
 from typing import Optional
 
@@ -26,7 +27,9 @@ async def get_my_usage(
     current_user: UserContext = Depends(get_current_user)
 ):
     """Get current user's usage summary"""
-    summary = get_user_usage_summary(current_user.user_id, days, db)
+    # Use the new usage tracker
+    tracker = UsageTracker(db)
+    summary = tracker.get_usage_summary(current_user.user_id, days)
     
     return UserUsageResponse(
         user_id=current_user.user_id,
@@ -50,4 +53,23 @@ async def get_my_profile(
         "email": current_user.email,
         "role": current_user.role,
         "tier": current_user.tier
+    }
+
+@router.get("/me/tier-info")
+async def get_my_tier_info(
+    db: Session = Depends(get_db),
+    current_user: UserContext = Depends(get_current_user)
+):
+    """Get current user's tier information with remaining limits"""
+    tracker = UsageTracker(db)
+    tier_info = tracker.get_tier_info(current_user.user_id)
+    
+    return {
+        "user_id": current_user.user_id,
+        "email": current_user.email,
+        "tier": tier_info.get("tier", "free"),
+        "role": tier_info.get("role", "free"),
+        "limits": tier_info.get("limits", {}),
+        "current_usage": tier_info.get("current_usage", {}),
+        "remaining": tier_info.get("remaining", {})
     }

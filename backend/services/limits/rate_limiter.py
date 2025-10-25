@@ -4,10 +4,18 @@ import os
 from fastapi import HTTPException
 from typing import Dict, Tuple
 import json
+from sqlalchemy.orm import Session
+from db.database import SessionLocal
+from services.usage_tracker import UsageTracker
 
-# Redis connection
+# Redis connection (optional)
 REDIS_URL = os.getenv("REDIS_URL", "redis://localhost:6379")
-redis_client = redis.from_url(REDIS_URL, decode_responses=True)
+try:
+    redis_client = redis.from_url(REDIS_URL, decode_responses=True)
+    REDIS_AVAILABLE = True
+except:
+    redis_client = None
+    REDIS_AVAILABLE = False
 
 class RatePolicy:
     def __init__(self, capacity: int, refill_per_sec: float):
@@ -27,6 +35,51 @@ def _policy_for_tier(tier: str) -> RatePolicy:
     return FREE_POLICY
 
 def allow(user_id: str, tier: str, route_key: str):
+    """Database-backed rate limiting with usage tracking"""
+    db = SessionLocal()
+    try:
+        # Use the usage tracker for rate limiting
+        tracker = UsageTracker(db)
+        limit_check = tracker.check_limits(user_id, route_key, "unknown", 0, 0)
+        
+        if not limit_check["can_proceed"]:
+            exceeded_limits = limit_check["exceeded_limits"]
+            remaining = limit_check["remaining"]
+            
+            error_message = "Rate limit exceeded"
+            if "daily_requests" in exceeded_limits:
+                error_message += f" - Daily request limit reached. Remaining: {remaining['requests_today']}"
+            if "minute_requests" in exceeded_limits:
+                error_message += f" - Minute request limit reached. Remaining: {remaining['requests_minute']}"
+            if "daily_tokens" in exceeded_limits:
+                error_message += f" - Daily token limit reached. Remaining: {remaining['tokens_today']}"
+            
+            raise HTTPException(
+                status_code=429,
+                detail={
+                    "message": error_message,
+                    "rate_limit_exceeded": True,
+                    "exceeded_limits": exceeded_limits,
+                    "remaining": remaining,
+                    "retry_after": 3600
+                },
+                headers={
+                    "X-RateLimit-Limit": str(limit_check["limits"].get("requests_per_day", 50)),
+                    "X-RateLimit-Remaining": str(remaining["requests_today"]),
+                    "Retry-After": "3600"
+                }
+            )
+        
+        # If Redis is available, also use it for additional rate limiting
+        if REDIS_AVAILABLE:
+            _allow_redis(user_id, tier, route_key)
+        else:
+            _allow_in_memory(user_id, tier, route_key)
+            
+    finally:
+        db.close()
+
+def _allow_redis(user_id: str, tier: str, route_key: str):
     """Redis-backed rate limiting with token bucket algorithm"""
     try:
         policy = _policy_for_tier(tier)

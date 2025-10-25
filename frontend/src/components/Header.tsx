@@ -5,13 +5,16 @@ import { Sparkles, Menu, X, User, LogOut, Crown, Zap, BarChart3 } from "lucide-r
 import { useState, useEffect, useRef } from "react";
 import { useAuth } from "@/contexts/AuthContext";
 import { useRouter } from "next/navigation";
+import UserMetricsDropdown from "./UserMetricsDropdown";
 
 export default function Header() {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [showUserMenu, setShowUserMenu] = useState(false);
+  const [showMetricsDropdown, setShowMetricsDropdown] = useState(false);
   const { user, isAuthenticated, logout } = useAuth();
   const router = useRouter();
   const userMenuRef = useRef<HTMLDivElement>(null);
+  const metricsButtonRef = useRef<HTMLDivElement>(null);
 
   // Close user menu when clicking outside
   useEffect(() => {
@@ -19,16 +22,19 @@ export default function Header() {
       if (userMenuRef.current && !userMenuRef.current.contains(event.target as Node)) {
         setShowUserMenu(false);
       }
+      if (metricsButtonRef.current && !metricsButtonRef.current.contains(event.target as Node)) {
+        setShowMetricsDropdown(false);
+      }
     };
 
-    if (showUserMenu) {
+    if (showUserMenu || showMetricsDropdown) {
       document.addEventListener('mousedown', handleClickOutside);
     }
 
     return () => {
       document.removeEventListener('mousedown', handleClickOutside);
     };
-  }, [showUserMenu]);
+  }, [showUserMenu, showMetricsDropdown]);
 
   const handleLogout = () => {
     logout();
@@ -100,10 +106,19 @@ export default function Header() {
               Workflow
             </a>
             {isAuthenticated && (
-              <a href="/metrics" className="text-gray-600 hover:text-blue-600 transition-colors flex items-center space-x-1">
-                <BarChart3 className="h-4 w-4" />
-                <span>Metrics</span>
-              </a>
+              <div className="relative" ref={metricsButtonRef}>
+                <button
+                  onClick={() => setShowMetricsDropdown(!showMetricsDropdown)}
+                  className="text-gray-600 hover:text-blue-600 transition-colors flex items-center space-x-1"
+                >
+                  <BarChart3 className="h-4 w-4" />
+                  <span>Metrics</span>
+                </button>
+                <UserMetricsDropdown 
+                  isOpen={showMetricsDropdown} 
+                  onClose={() => setShowMetricsDropdown(false)} 
+                />
+              </div>
             )}
             <a href="#about" className="text-gray-600 hover:text-blue-600 transition-colors">
               About
@@ -227,10 +242,23 @@ export default function Header() {
                 Workflow
               </a>
               {isAuthenticated && (
-                <a href="/metrics" className="text-gray-600 hover:text-blue-600 transition-colors flex items-center space-x-2">
-                  <BarChart3 className="h-4 w-4" />
-                  <span>Metrics</span>
-                </a>
+                <div className="relative">
+                  <button
+                    onClick={() => setShowMetricsDropdown(!showMetricsDropdown)}
+                    className="text-gray-600 hover:text-blue-600 transition-colors flex items-center space-x-2 w-full text-left"
+                  >
+                    <BarChart3 className="h-4 w-4" />
+                    <span>Metrics</span>
+                  </button>
+                  {showMetricsDropdown && (
+                    <div className="mt-2">
+                      <UserMetricsDropdown 
+                        isOpen={showMetricsDropdown} 
+                        onClose={() => setShowMetricsDropdown(false)} 
+                      />
+                    </div>
+                  )}
+                </div>
               )}
               <a href="#about" className="text-gray-600 hover:text-blue-600 transition-colors">
                 About

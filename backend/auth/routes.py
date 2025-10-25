@@ -15,12 +15,18 @@ router = APIRouter()
 class LoginRequest(BaseModel):
     email: str
 
+class RegisterRequest(BaseModel):
+    email: str
+    role: str = "free"  # Default to free tier
+
 class LoginResponse(BaseModel):
     access_token: str
     refresh_token: str
     user_id: str
     email: str
     role: str
+    tier: str
+    limits: dict
 
 class RefreshRequest(BaseModel):
     refresh_token: str
@@ -38,29 +44,36 @@ class ApiKeyCreateResponse(BaseModel):
     api_key: str
     key_info: ApiKeyResponse
 
-@router.post("/login", response_model=LoginResponse)
-async def login(request: LoginRequest, db: Session = Depends(get_db)):
-    """Login with email (passwordless for now)"""
-    # For now, create user if doesn't exist
-    user = db.query(User).filter(User.email == request.email).first()
+@router.post("/register", response_model=LoginResponse)
+async def register(request: RegisterRequest, db: Session = Depends(get_db)):
+    """Register a new user"""
+    # Check if user already exists
+    existing_user = db.query(User).filter(User.email == request.email).first()
+    if existing_user:
+        raise HTTPException(status_code=400, detail="User with this email already exists")
     
-    if not user:
-        # Create new user with free tier
-        user = User(
-            email=request.email,
-            role="free"
-        )
-        db.add(user)
-        db.flush()  # Get the ID
-        
-        # Create default plan
-        plan = Plan(
-            user_id=user.id,
-            tier="free",
-            limits_json='{"requests_per_day": 50, "requests_per_minute": 2}'
-        )
-        db.add(plan)
-        db.commit()
+    # Create new user
+    user = User(
+        email=request.email,
+        role=request.role
+    )
+    db.add(user)
+    db.flush()  # Get the ID
+    
+    # Create plan with appropriate limits
+    tier_limits = {
+        "free": {"requests_per_day": 50, "requests_per_minute": 2, "tokens_per_day": 10000},
+        "pro": {"requests_per_day": 500, "requests_per_minute": 10, "tokens_per_day": 100000},
+        "admin": {"requests_per_day": 10000, "requests_per_minute": 100, "tokens_per_day": 1000000}
+    }
+    
+    plan = Plan(
+        user_id=user.id,
+        tier=request.role,
+        limits_json=str(tier_limits.get(request.role, tier_limits["free"]))
+    )
+    db.add(plan)
+    db.commit()
     
     # Generate tokens
     access_token = create_access_token(user.id, user.email, user.role)
@@ -71,7 +84,45 @@ async def login(request: LoginRequest, db: Session = Depends(get_db)):
         refresh_token=refresh_token,
         user_id=user.id,
         email=user.email,
-        role=user.role
+        role=user.role,
+        tier=request.role,
+        limits=tier_limits.get(request.role, tier_limits["free"])
+    )
+
+@router.post("/login", response_model=LoginResponse)
+async def login(request: LoginRequest, db: Session = Depends(get_db)):
+    """Login with email (passwordless for now)"""
+    # Find existing user
+    user = db.query(User).filter(User.email == request.email).first()
+    
+    if not user:
+        raise HTTPException(status_code=404, detail="User not found. Please register first.")
+    
+    # Get user's plan
+    plan = db.query(Plan).filter(Plan.user_id == user.id).first()
+    if not plan:
+        raise HTTPException(status_code=500, detail="User plan not found")
+    
+    # Parse limits with error handling
+    import json
+    try:
+        limits = json.loads(plan.limits_json) if plan.limits_json else {}
+    except json.JSONDecodeError:
+        # Handle malformed JSON by using default limits
+        limits = {"requests_per_day": 50, "requests_per_minute": 2, "tokens_per_day": 10000}
+    
+    # Generate tokens
+    access_token = create_access_token(user.id, user.email, user.role)
+    refresh_token = create_refresh_token(user.id)
+    
+    return LoginResponse(
+        access_token=access_token,
+        refresh_token=refresh_token,
+        user_id=user.id,
+        email=user.email,
+        role=user.role,
+        tier=plan.tier,
+        limits=limits
     )
 
 @router.post("/refresh", response_model=LoginResponse)

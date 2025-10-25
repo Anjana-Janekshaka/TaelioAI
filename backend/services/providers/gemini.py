@@ -1,9 +1,16 @@
 import time
 import os
-import google.generativeai as genai
 from schemas.idea import IdeaRequest, IdeaResponse
 from schemas.story import StoryRequest, StoryResponse
 from .base import GenerationResult, IdeaProvider, StoryProvider
+
+# Import Google Generative AI only when needed
+try:
+    import google.generativeai as genai
+    GEMINI_AVAILABLE = True
+except ImportError:
+    GEMINI_AVAILABLE = False
+    genai = None
 
 _DEFAULT_IDEA_MODEL = {
     "free": "gemini-2.5-flash",
@@ -16,6 +23,9 @@ _DEFAULT_STORY_MODEL = {
 
 class GeminiIdeaProvider(IdeaProvider):
     def __init__(self, tier: str):
+        if not GEMINI_AVAILABLE:
+            raise ValueError("Google Generative AI is not available. Please install google-generativeai package.")
+        
         self.tier = tier
         self.model_name = _DEFAULT_IDEA_MODEL.get(tier, "gemini-2.5-flash")
         api_key = os.getenv("GEMINI_API_KEY")
@@ -129,6 +139,9 @@ Do not use JSON format. Do not use code blocks. Just plain text with the exact f
 
 class GeminiStoryProvider(StoryProvider):
     def __init__(self, tier: str):
+        if not GEMINI_AVAILABLE:
+            raise ValueError("Google Generative AI is not available. Please install google-generativeai package.")
+        
         self.tier = tier
         self.model_name = _DEFAULT_STORY_MODEL.get(tier, "gemini-2.5-flash")
         api_key = os.getenv("GEMINI_API_KEY")
