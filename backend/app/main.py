@@ -25,7 +25,7 @@ if not api_key:
     print("WARNING: GEMINI_API_KEY environment variable is not set!")
     print("Please create a .env file in the backend directory with your Google API key.")
 else:
-    print(f"✅ GEMINI_API_KEY loaded successfully: {api_key[:10]}...")
+    print(f"[OK] GEMINI_API_KEY loaded successfully: {api_key[:10]}...")
     print(f"Environment variable length: {len(api_key)}")
 
 app = FastAPI(title="TaelioAI Story Writer API", version="1.0.0")
@@ -33,9 +33,14 @@ app = FastAPI(title="TaelioAI Story Writer API", version="1.0.0")
 # Add CORS middleware
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],  # Configure this properly for production
+    allow_origins=[
+        "http://localhost:3000",
+        "http://127.0.0.1:3000",
+        "http://localhost:3001",
+        "http://127.0.0.1:3001"
+    ],
     allow_credentials=True,
-    allow_methods=["*"],
+    allow_methods=["GET", "POST", "PUT", "DELETE", "OPTIONS"],
     allow_headers=["*"],
 )
 

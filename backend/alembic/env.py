@@ -5,7 +5,7 @@ from alembic import context
 import os
 import sys
 
-# Add the backend directory to the Python path
+
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 # Import your models

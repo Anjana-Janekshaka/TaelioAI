@@ -50,7 +50,7 @@ class MultiAgentSystem:
         self.agents[agent.agent_id] = agent
         self.agent_registry[agent_type].append(agent.agent_id)
         
-        print(f"✅ Registered agent: {agent.name} ({agent.agent_id})")
+        print(f"[OK] Registered agent: {agent.name} ({agent.agent_id})")
     
     def get_agent(self, agent_id: str) -> Optional[BaseAgent]:
         """Get an agent by ID"""
@@ -141,7 +141,8 @@ class MultiAgentSystem:
             "agent_id": idea_agent.agent_id,
             "agent_type": idea_agent.agent_type,
             "success": idea_response.success,
-            "execution_time_ms": idea_response.execution_time_ms
+            "execution_time_ms": idea_response.execution_time_ms,
+            "agent_response": idea_response  # Store complete response with metadata
         })
         
         if not idea_response.success:
@@ -167,7 +168,8 @@ class MultiAgentSystem:
             "agent_id": story_agent.agent_id,
             "agent_type": story_agent.agent_type,
             "success": story_response.success,
-            "execution_time_ms": story_response.execution_time_ms
+            "execution_time_ms": story_response.execution_time_ms,
+            "agent_response": story_response  # Store complete response with metadata
         })
         
         if not story_response.success:
@@ -187,7 +189,8 @@ class MultiAgentSystem:
                 "agent_id": mod_agent.agent_id,
                 "agent_type": mod_agent.agent_type,
                 "success": mod_response.success,
-                "execution_time_ms": mod_response.execution_time_ms
+                "execution_time_ms": mod_response.execution_time_ms,
+                "agent_response": mod_response  # Store complete response with metadata
             })
             
             if not mod_response.success or not mod_response.data.get("is_safe", True):
@@ -210,7 +213,8 @@ class MultiAgentSystem:
                 "agent_id": qa_agent.agent_id,
                 "agent_type": qa_agent.agent_type,
                 "success": qa_response.success,
-                "execution_time_ms": qa_response.execution_time_ms
+                "execution_time_ms": qa_response.execution_time_ms,
+                "agent_response": qa_response  # Store complete response with metadata
             })
         
         # Assemble final result
@@ -243,7 +247,8 @@ class MultiAgentSystem:
                 "agent_id": idea_agent.agent_id,
                 "agent_type": idea_agent.agent_type,
                 "success": idea_response.success,
-                "execution_time_ms": idea_response.execution_time_ms
+                "execution_time_ms": idea_response.execution_time_ms,
+                "agent_response": idea_response  # Store complete response with metadata
             }],
             "total_execution_time_ms": idea_response.execution_time_ms
         }
@@ -265,7 +270,8 @@ class MultiAgentSystem:
                 "agent_id": story_agent.agent_id,
                 "agent_type": story_agent.agent_type,
                 "success": story_response.success,
-                "execution_time_ms": story_response.execution_time_ms
+                "execution_time_ms": story_response.execution_time_ms,
+                "agent_response": story_response  # Store complete response with metadata
             }],
             "total_execution_time_ms": story_response.execution_time_ms
         }
