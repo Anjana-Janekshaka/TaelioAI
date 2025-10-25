@@ -39,12 +39,12 @@ export default function StoryWriter() {
   };
 
   const downloadStory = () => {
-    if (!story || !story.content) return;
+    if (!story || !story.story) return;
     
     const element = document.createElement('a');
-    const file = new Blob([story.content], { type: 'text/plain' });
+    const file = new Blob([story.story], { type: 'text/plain' });
     element.href = URL.createObjectURL(file);
-    element.download = `${(story.title || 'story').replace(/\s+/g, '_')}.txt`;
+    element.download = `${(title || 'story').replace(/\s+/g, '_')}.txt`;
     document.body.appendChild(element);
     element.click();
     document.body.removeChild(element);
@@ -186,7 +186,7 @@ export default function StoryWriter() {
               </motion.div>
             )}
 
-            {story ? (
+                        {story ? (
               <motion.div
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
@@ -194,21 +194,21 @@ export default function StoryWriter() {
               >
                 <div className="bg-gradient-to-r from-purple-50 to-pink-50 p-6 rounded-xl">
                   <div className="flex items-center justify-between mb-4">
-                    <h3 className="text-xl font-bold text-gray-900">{story.title || "Untitled Story"}</h3>
+                    <h3 className="text-xl font-bold text-gray-900">{title || "Untitled Story"}</h3>
                     <div className="flex items-center space-x-2">
                       <span className="px-3 py-1 bg-purple-100 text-purple-700 rounded-full text-sm">
-                        {story.genre || "Unknown Genre"}
+                        {genre || "Unknown Genre"}
                       </span>
                       <span className="px-3 py-1 bg-pink-100 text-pink-700 rounded-full text-sm">
-                        {story.tone || "Unknown Tone"}
+                        {tone || "Unknown Tone"}
                       </span>
                     </div>
                   </div>
                   <div className="flex items-center justify-between text-sm text-gray-600">
-                    <span>{story.word_count || 0} words</span>
+                    <span>{(story.story || "").split(/\s+/).length} words</span>
                     <div className="flex space-x-2">
                       <button
-                        onClick={() => copyToClipboard(story.content || "")}
+                        onClick={() => copyToClipboard(story.story || "")}
                         className="p-2 hover:bg-white/50 rounded-lg transition-colors"
                         title="Copy story"
                       >
@@ -231,11 +231,16 @@ export default function StoryWriter() {
                   </div>
                 </div>
 
-                <div className="bg-gray-50 rounded-xl p-6 max-h-96 overflow-y-auto">
-                  <div className="prose prose-sm max-w-none">
-                    <pre className="whitespace-pre-wrap text-gray-700 leading-relaxed">
-                      {story.content || "No content available"}
-                    </pre>
+                <div className="bg-white border border-gray-200 rounded-xl p-8 max-h-[500px] overflow-y-auto shadow-sm">
+                  <div className="prose prose-lg max-w-none prose-headings:text-gray-900 prose-h1:text-3xl prose-h2:text-2xl prose-h3:text-xl prose-h2:font-bold prose-h3:font-semibold prose-p:text-gray-700 prose-p:leading-relaxed prose-p:mb-4 prose-strong:text-gray-900 prose-em:text-gray-600">
+                    <div className="whitespace-pre-wrap text-gray-800 font-serif leading-7" 
+                         style={{ 
+                           fontFamily: 'Georgia, serif',
+                           fontSize: '1.125rem',
+                           lineHeight: '1.875rem'
+                         }}
+                         dangerouslySetInnerHTML={{ __html: (story.story || "No content available").replace(/\n/g, '<br/>') }} 
+                    />
                   </div>
                 </div>
               </motion.div>
