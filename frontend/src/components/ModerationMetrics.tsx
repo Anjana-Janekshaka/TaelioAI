@@ -1,7 +1,8 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
-import { apiService, ModerationMetrics, ModerationStats } from '@/lib/api';
+import { apiService } from '@/lib/api';
+import type { ModerationMetrics, ModerationStats } from '@/lib/api';
 
 interface ModerationMetricsProps {
   className?: string;

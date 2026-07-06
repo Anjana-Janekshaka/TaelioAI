@@ -1,5 +1,6 @@
 import { useState, useCallback } from 'react';
 import { apiService } from '@/lib/api';
+import type { FullStoryResponse, IdeaResponse, StoryResponse } from '@/lib/api';
 
 export interface ApiState<T> {
   data: T | null;
@@ -40,7 +41,7 @@ export function useApi<T>() {
 }
 
 export function useIdeaGeneration() {
-  const { data, loading, error, execute, reset } = useApi();
+  const { data, loading, error, execute, reset } = useApi<IdeaResponse>();
 
   const generateIdea = useCallback(async (prompt: string, genre: string, tone?: string) => {
     return execute(() => apiService.generateIdea({ prompt, genre, tone }));
@@ -56,13 +57,13 @@ export function useIdeaGeneration() {
 }
 
 export function useStoryWriting() {
-  const { data, loading, error, execute, reset } = useApi();
+  const { data, loading, error, execute, reset } = useApi<StoryResponse>();
 
   const writeStory = useCallback(async (request: {
     title: string;
     genre: string;
     tone?: string;
-    outline?: string;
+    outline: string;
     characters?: string;
     setting?: string;
   }) => {
@@ -88,7 +89,7 @@ export function useStreamingStoryWriting() {
     title: string;
     genre: string;
     tone?: string;
-    outline?: string;
+    outline: string;
     characters?: string;
     setting?: string;
   }, streamingSpeed: string = "normal") => {
@@ -133,7 +134,7 @@ export function useStreamingStoryWriting() {
 }
 
 export function useFullWorkflow() {
-  const { data, loading, error, execute, reset } = useApi();
+  const { data, loading, error, execute, reset } = useApi<FullStoryResponse>();
 
   const generateFullStory = useCallback(async (prompt: string, genre?: string, tone?: string) => {
     return execute(() => apiService.generateFullStory({ prompt, genre, tone }));
