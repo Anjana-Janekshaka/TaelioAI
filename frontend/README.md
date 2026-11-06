@@ -49,4 +49,4 @@ src/
 
 ## Design system
 
-Every story is a paperback in the TaelioAI series. Genre colours live in `src/lib/series.ts`; colour, type and radius tokens in `tailwind.config.js`; component classes (`.btn-primary`, `.field`, `.book-text`, …) in `src/app/globals.css`. Fonts: Josefin Sans (display), Figtree (UI), Literata (story text), loaded through `next/font`.
+Every story is a paperback in the TaelioAI series. Genre colours live in `src/lib/series.ts`; colour, type and radius tokens in `tailwind.config.js`; component classes (`.btn-primary`, `.field`, `.book-text`, …) in `src/app/globals.css`. Fonts: Josefin Sans (display), Figtree (UI), Literata (story text), self-hosted from `src/app/fonts` with `next/font/local` (SIL OFL 1.1).

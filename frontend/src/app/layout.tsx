@@ -1,25 +1,29 @@
 import type { Metadata } from "next";
-import { Josefin_Sans, Figtree, Literata } from "next/font/google";
+import localFont from "next/font/local";
 import "./globals.css";
 import { AuthProvider } from "@/contexts/AuthContext";
 
-const display = Josefin_Sans({
-  subsets: ["latin"],
-  weight: ["600", "700"],
+// Self-hosted variable fonts (SIL OFL 1.1, licences in ./fonts), so builds
+// never depend on fetching from Google Fonts.
+const display = localFont({
+  src: "./fonts/JosefinSans-Variable.woff2",
+  weight: "100 700",
   variable: "--font-display",
   display: "swap",
 });
 
-const ui = Figtree({
-  subsets: ["latin"],
-  weight: ["400", "500", "600", "700"],
+const ui = localFont({
+  src: "./fonts/Figtree-Variable.woff2",
+  weight: "300 900",
   variable: "--font-ui",
   display: "swap",
 });
 
-const book = Literata({
-  subsets: ["latin"],
-  style: ["normal", "italic"],
+const book = localFont({
+  src: [
+    { path: "./fonts/Literata-Variable.woff2", weight: "200 900", style: "normal" },
+    { path: "./fonts/Literata-Italic-Variable.woff2", weight: "200 900", style: "italic" },
+  ],
   variable: "--font-book",
   display: "swap",
 });
