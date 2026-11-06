@@ -4,6 +4,11 @@ from fastapi.middleware.cors import CORSMiddleware
 from dotenv import load_dotenv
 import sys
 import os
+
+# Load .env before importing app modules: several (auth.jwt, db.database,
+# the rate limiter) read their settings at import time.
+load_dotenv()
+
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 from api.routes import story as story_routes
 from api.routes import idea as idea_routes
@@ -17,9 +22,6 @@ from api.routes import story_editor as story_editor_routes
 from auth.routes import router as auth_routes
 from metrics.usage import UsageLoggingMiddleware
 from metrics.prom import create_metrics_response
-
-# Load environment variables from .env file
-load_dotenv()
 
 # Check if required environment variables are set
 api_key = os.getenv("GEMINI_API_KEY")
