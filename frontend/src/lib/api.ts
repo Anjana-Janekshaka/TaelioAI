@@ -141,6 +141,69 @@ client.interceptors.request.use((config) => {
   return config;
 });
 
+// Access tokens last 15 minutes. On a 401, renew once with the refresh token;
+// if that fails, clear the session and send the user to the login page.
+let refreshPromise: Promise<string | null> | null = null;
+
+function clearSessionAndRedirect() {
+  if (typeof window === 'undefined') return;
+  try {
+    ['auth_token', 'refresh_token', 'user_id', 'user_email', 'user_role'].forEach((k) =>
+      localStorage.removeItem(k)
+    );
+  } catch {
+    // storage unavailable
+  }
+  if (!window.location.pathname.startsWith('/login')) {
+    window.location.href = '/login';
+  }
+}
+
+async function refreshAccessToken(): Promise<string | null> {
+  if (typeof window === 'undefined') return null;
+  let refreshToken: string | null = null;
+  try {
+    refreshToken = localStorage.getItem('refresh_token');
+  } catch {
+    return null;
+  }
+  if (!refreshToken) return null;
+
+  if (!refreshPromise) {
+    refreshPromise = axios
+      .post<LoginResponse>(`${API_URL}/auth/refresh`, { refresh_token: refreshToken })
+      .then(({ data }) => {
+        localStorage.setItem('auth_token', data.access_token);
+        localStorage.setItem('refresh_token', data.refresh_token);
+        return data.access_token;
+      })
+      .catch(() => null)
+      .finally(() => {
+        refreshPromise = null;
+      });
+  }
+  return refreshPromise;
+}
+
+client.interceptors.response.use(
+  (response) => response,
+  async (error) => {
+    const original = error.config;
+    const isAuthCall = original?.url?.startsWith('/auth/');
+    if (error.response?.status === 401 && original && !original._retried && !isAuthCall) {
+      original._retried = true;
+      const newToken = await refreshAccessToken();
+      if (newToken) {
+        original.headers = original.headers ?? {};
+        original.headers.Authorization = `Bearer ${newToken}`;
+        return client(original);
+      }
+      clearSessionAndRedirect();
+    }
+    return Promise.reject(error);
+  }
+);
+
 // ---- API service ----
 
 export const apiService = {
@@ -166,11 +229,22 @@ export const apiService = {
     streamingSpeed: string = 'normal'
   ): Promise<void> {
     const url = `${API_URL}/story/write-story-stream?streaming_speed=${encodeURIComponent(streamingSpeed)}`;
-    const response = await fetch(url, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json', ...authHeaders() },
-      body: JSON.stringify(request),
-    });
+    const send = () =>
+      fetch(url, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', ...authHeaders() },
+        body: JSON.stringify(request),
+      });
+
+    let response = await send();
+    if (response.status === 401) {
+      if (await refreshAccessToken()) {
+        response = await send();
+      }
+      if (response.status === 401) {
+        clearSessionAndRedirect();
+      }
+    }
 
     if (!response.ok || !response.body) {
       let detail = `Request failed with status ${response.status}`;

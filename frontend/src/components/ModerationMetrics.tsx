@@ -1,113 +1,66 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import React, { useCallback, useEffect, useState } from 'react';
 import { apiService } from '@/lib/api';
 import type { ModerationMetrics, ModerationStats } from '@/lib/api';
+import { ErrorNote } from '@/components/studio/shared';
 
-interface ModerationMetricsProps {
-  className?: string;
-}
+const scoreLabel = (score: number) =>
+  score >= 90 ? 'Excellent' : score >= 70 ? 'Good' : score >= 50 ? 'Fair' : 'Poor';
 
-const ModerationMetrics: React.FC<ModerationMetricsProps> = ({ className = '' }) => {
+const scoreColor = (score: number) =>
+  score >= 90 ? 'text-genre-fantasy' : score >= 70 ? 'text-ink' : score >= 50 ? 'text-genre-thriller' : 'text-alert';
+
+const humanize = (s: string) => s.replace(/_/g, ' ');
+
+const SEVERITY: Record<string, string> = {
+  high: 'bg-alert-tint text-alert',
+  medium: 'bg-[#fbf1d9] text-[#7a560c]',
+  low: 'bg-paper text-ink-soft',
+};
+
+const ModerationMetricsPanel: React.FC<{ className?: string }> = ({ className = '' }) => {
   const [metrics, setMetrics] = useState<ModerationMetrics | null>(null);
   const [stats, setStats] = useState<ModerationStats | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [selectedPeriod, setSelectedPeriod] = useState(30);
+  const [period, setPeriod] = useState(30);
 
-  useEffect(() => {
-    fetchModerationData();
-  }, [selectedPeriod]);
-
-  const fetchModerationData = async () => {
+  const load = useCallback(async () => {
+    setLoading(true);
+    setError(null);
     try {
-      setLoading(true);
-      setError(null);
-      
-      const [metricsData, statsData] = await Promise.all([
-        apiService.getModerationMetrics(selectedPeriod),
-        apiService.getModerationStats(selectedPeriod)
+      const [m, s] = await Promise.all([
+        apiService.getModerationMetrics(period),
+        apiService.getModerationStats(period),
       ]);
-      
-      setMetrics(metricsData);
-      setStats(statsData);
-    } catch (err) {
-      console.error('Failed to fetch moderation data:', err);
-      setError('Failed to load moderation metrics');
+      setMetrics(m);
+      setStats(s);
+    } catch (err: any) {
+      setError(err?.response?.data?.detail || err?.message || 'Failed to load moderation metrics');
     } finally {
       setLoading(false);
     }
-  };
+  }, [period]);
 
-  const getSafetyScoreColor = (score: number) => {
-    if (score >= 90) return 'text-green-600';
-    if (score >= 70) return 'text-yellow-600';
-    if (score >= 50) return 'text-orange-600';
-    return 'text-red-600';
-  };
+  useEffect(() => {
+    load();
+  }, [load]);
 
-  const getSafetyScoreLabel = (score: number) => {
-    if (score >= 90) return 'Excellent';
-    if (score >= 70) return 'Good';
-    if (score >= 50) return 'Fair';
-    return 'Poor';
-  };
-
-  if (loading) {
-    return (
-      <div className={`bg-white rounded-lg shadow-md p-6 ${className}`}>
-        <div className="animate-pulse">
-          <div className="h-6 bg-gray-200 rounded w-1/3 mb-4"></div>
-          <div className="space-y-3">
-            <div className="h-4 bg-gray-200 rounded"></div>
-            <div className="h-4 bg-gray-200 rounded w-5/6"></div>
-            <div className="h-4 bg-gray-200 rounded w-4/6"></div>
-          </div>
-        </div>
-      </div>
-    );
-  }
-
-  if (error) {
-    return (
-      <div className={`bg-white rounded-lg shadow-md p-6 ${className}`}>
-        <div className="text-center">
-          <div className="text-red-600 mb-2">⚠️</div>
-          <p className="text-red-600">{error}</p>
-          <button 
-            onClick={fetchModerationData}
-            className="mt-2 px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700"
-          >
-            Retry
-          </button>
-        </div>
-      </div>
-    );
-  }
-
-  if (!metrics || !stats) {
-    return (
-      <div className={`bg-white rounded-lg shadow-md p-6 ${className}`}>
-        <p className="text-gray-500">No moderation data available</p>
-      </div>
-    );
-  }
+  const distribution = metrics ? Object.entries(metrics.safety_score_distribution) : [];
+  const maxBucket = Math.max(1, ...distribution.map(([, c]) => Number(c)));
+  const empty = metrics && metrics.total_content_moderated === 0;
 
   return (
-    <div className={`bg-white rounded-lg shadow-md p-6 ${className}`}>
-      {/* Header */}
-      <div className="flex justify-between items-center mb-6">
-        <h2 className="text-2xl font-bold text-gray-800">Content Moderation Metrics</h2>
-        <div className="flex items-center space-x-2">
-          <label htmlFor="period" className="text-sm font-medium text-gray-700">
-            Period:
-          </label>
-          <select
-            id="period"
-            value={selectedPeriod}
-            onChange={(e) => setSelectedPeriod(Number(e.target.value))}
-            className="border border-gray-300 rounded px-3 py-1 text-sm"
-          >
+    <section className={className} aria-busy={loading}>
+      <div className="flex flex-wrap items-end justify-between gap-4 border-b border-rule pb-5">
+        <div>
+          <h1 className="font-display text-4xl font-bold leading-tight">Content safety</h1>
+          <p className="mt-2 text-ink-soft">What the Content Moderator found in your content.</p>
+        </div>
+        <div>
+          <label htmlFor="period" className="label text-sm">Period</label>
+          <select id="period" value={period} onChange={(e) => setPeriod(Number(e.target.value))} className="field py-2">
             <option value={7}>Last 7 days</option>
             <option value={30}>Last 30 days</option>
             <option value={90}>Last 90 days</option>
@@ -115,119 +68,135 @@ const ModerationMetrics: React.FC<ModerationMetricsProps> = ({ className = '' })
         </div>
       </div>
 
-      {/* Overview Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
-        <div className="bg-blue-50 rounded-lg p-4">
-          <div className="text-2xl font-bold text-blue-600">{metrics.total_content_moderated}</div>
-          <div className="text-sm text-blue-800">Content Moderated</div>
-        </div>
-        
-        <div className="bg-red-50 rounded-lg p-4">
-          <div className="text-2xl font-bold text-red-600">{metrics.total_violations_found}</div>
-          <div className="text-sm text-red-800">Violations Found</div>
-        </div>
-        
-        <div className="bg-orange-50 rounded-lg p-4">
-          <div className="text-2xl font-bold text-orange-600">{metrics.total_unsafe_content}</div>
-          <div className="text-sm text-orange-800">Unsafe Content</div>
-        </div>
-        
-        <div className="bg-green-50 rounded-lg p-4">
-          <div className={`text-2xl font-bold ${getSafetyScoreColor(metrics.average_safety_score)}`}>
-            {metrics.average_safety_score.toFixed(1)}
+      {loading && (
+        <div className="mt-8 animate-pulse space-y-4" aria-label="Loading">
+          <div className="h-5 w-2/3 rounded bg-rule" />
+          <div className="grid grid-cols-2 gap-4 md:grid-cols-4">
+            {[0, 1, 2, 3].map((i) => <div key={i} className="h-16 rounded bg-rule/70" />)}
           </div>
-          <div className="text-sm text-green-800">Avg Safety Score</div>
-        </div>
-      </div>
-
-      {/* Detailed Metrics */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        {/* Violations by Type */}
-        <div className="bg-gray-50 rounded-lg p-4">
-          <h3 className="text-lg font-semibold text-gray-800 mb-4">Violations by Type</h3>
-          <div className="space-y-3">
-            {Object.entries(metrics.violations_by_type).map(([type, count]) => (
-              <div key={type} className="flex justify-between items-center">
-                <span className="text-sm text-gray-600 capitalize">
-                  {type.replace('_', ' ')}
-                </span>
-                <span className="font-semibold text-gray-800">{count}</span>
-              </div>
-            ))}
-          </div>
-        </div>
-
-        {/* Content by Type */}
-        <div className="bg-gray-50 rounded-lg p-4">
-          <h3 className="text-lg font-semibold text-gray-800 mb-4">Content by Type</h3>
-          <div className="space-y-3">
-            {Object.entries(metrics.content_by_type).map(([type, count]) => (
-              <div key={type} className="flex justify-between items-center">
-                <span className="text-sm text-gray-600 capitalize">{type}</span>
-                <span className="font-semibold text-gray-800">{count}</span>
-              </div>
-            ))}
-          </div>
-        </div>
-      </div>
-
-      {/* Safety Score Distribution */}
-      <div className="mt-6">
-        <h3 className="text-lg font-semibold text-gray-800 mb-4">Safety Score Distribution</h3>
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-          {Object.entries(metrics.safety_score_distribution).map(([range, count]) => (
-            <div key={range} className="bg-gray-50 rounded-lg p-4 text-center">
-              <div className="text-2xl font-bold text-gray-800">{count}</div>
-              <div className="text-sm text-gray-600">{range}</div>
-            </div>
-          ))}
-        </div>
-      </div>
-
-      {/* Violation Breakdown */}
-      {stats.violation_breakdown.length > 0 && (
-        <div className="mt-6">
-          <h3 className="text-lg font-semibold text-gray-800 mb-4">Violation Breakdown</h3>
-          <div className="space-y-3">
-            {stats.violation_breakdown.map((violation, index) => (
-              <div key={index} className="bg-gray-50 rounded-lg p-4">
-                <div className="flex justify-between items-center mb-2">
-                  <span className="font-medium text-gray-800 capitalize">
-                    {violation.violation_type.replace('_', ' ')}
-                  </span>
-                  <span className={`px-2 py-1 rounded text-xs font-medium ${
-                    violation.severity === 'high' ? 'bg-red-100 text-red-800' :
-                    violation.severity === 'medium' ? 'bg-yellow-100 text-yellow-800' :
-                    'bg-green-100 text-green-800'
-                  }`}>
-                    {violation.severity}
-                  </span>
-                </div>
-                <div className="flex justify-between items-center text-sm text-gray-600">
-                  <span>{violation.count} violations</span>
-                  <span>{violation.percentage}% of content</span>
-                </div>
-              </div>
-            ))}
-          </div>
+          <div className="h-40 rounded bg-rule/50" />
         </div>
       )}
 
-      {/* Summary */}
-      <div className="mt-6 bg-blue-50 rounded-lg p-4">
-        <h3 className="text-lg font-semibold text-gray-800 mb-2">Summary</h3>
-        <p className="text-gray-600">
-          Over the last {selectedPeriod} days, {metrics.total_content_moderated} pieces of content 
-          were moderated with an average safety score of {metrics.average_safety_score.toFixed(1)} 
-          ({getSafetyScoreLabel(metrics.average_safety_score)}). 
-          {metrics.total_violations_found > 0 && (
-            <> {metrics.total_violations_found} violations were found and {metrics.total_unsafe_content} 
-            pieces of content were flagged as unsafe.</>
+      {!loading && error && (
+        <div className="mt-8 max-w-xl">
+          <ErrorNote message={error} onRetry={load} />
+        </div>
+      )}
+
+      {!loading && !error && metrics && stats && (
+        <>
+          <p className="mt-6 max-w-3xl text-lg leading-relaxed">
+            {empty ? (
+              <>Nothing was moderated in the last {period} days.</>
+            ) : (
+              <>
+                Over the last {period} days, {metrics.total_content_moderated} pieces of content were moderated, with an
+                average safety score of {metrics.average_safety_score.toFixed(1)} ({scoreLabel(metrics.average_safety_score)}).
+                {metrics.total_violations_found > 0 &&
+                  ` ${metrics.total_violations_found} violations were found and ${metrics.total_unsafe_content} pieces were flagged as unsafe.`}
+              </>
+            )}
+          </p>
+
+          <dl className="tnum mt-8 grid grid-cols-2 divide-rule border-y border-rule md:grid-cols-4 md:divide-x">
+            {[
+              { label: 'Content moderated', value: metrics.total_content_moderated, cls: '' },
+              { label: 'Violations found', value: metrics.total_violations_found, cls: metrics.total_violations_found ? 'text-alert' : '' },
+              { label: 'Flagged unsafe', value: metrics.total_unsafe_content, cls: metrics.total_unsafe_content ? 'text-alert' : '' },
+              {
+                label: 'Average safety score',
+                value: metrics.average_safety_score.toFixed(1),
+                cls: empty ? '' : scoreColor(metrics.average_safety_score),
+              },
+            ].map((s) => (
+              <div key={s.label} className="px-4 py-5 first:pl-0 md:first:pl-0">
+                <dt className="text-sm text-ink-mute">{s.label}</dt>
+                <dd className={`mt-1 font-display text-3xl font-bold ${s.cls}`}>{s.value}</dd>
+              </div>
+            ))}
+          </dl>
+
+          {!empty && (
+            <div className="mt-12 grid gap-12 lg:grid-cols-2">
+              <CountTable title="Violations by type" rows={Object.entries(metrics.violations_by_type)} />
+              <CountTable title="Content by type" rows={Object.entries(metrics.content_by_type)} />
+
+              <div className="lg:col-span-2">
+                <h2 className="text-lg font-semibold">Safety score distribution</h2>
+                <div className="mt-4 space-y-2.5">
+                  {distribution.map(([range, count]) => (
+                    <div key={range} className="grid grid-cols-[6rem_1fr_3rem] items-center gap-3 text-sm">
+                      <span className="tnum text-ink-soft">{range}</span>
+                      <div className="h-4 rounded-[2px] bg-paper">
+                        <div
+                          className="h-4 rounded-[2px] bg-ink"
+                          style={{ width: `${(Number(count) / maxBucket) * 100}%` }}
+                        />
+                      </div>
+                      <span className="tnum text-right font-semibold">{count}</span>
+                    </div>
+                  ))}
+                </div>
+              </div>
+
+              {stats.violation_breakdown.length > 0 && (
+                <div className="lg:col-span-2">
+                  <h2 className="text-lg font-semibold">Violation breakdown</h2>
+                  <table className="tnum mt-4 w-full text-left text-sm">
+                    <thead>
+                      <tr className="border-b border-ink/20 text-ink-mute">
+                        <th className="py-2 font-semibold">Type</th>
+                        <th className="py-2 text-right font-semibold">Violations</th>
+                        <th className="py-2 text-right font-semibold">Share of content</th>
+                        <th className="py-2 pl-6 font-semibold">Severity</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {stats.violation_breakdown.map((v, i) => (
+                        <tr key={i} className="border-b border-rule">
+                          <td className="py-3 capitalize">{humanize(v.violation_type)}</td>
+                          <td className="py-3 text-right">{v.count}</td>
+                          <td className="py-3 text-right">{v.percentage}%</td>
+                          <td className="py-3 pl-6">
+                            <span className={`rounded-[2px] px-2 py-0.5 text-xs font-semibold capitalize ${SEVERITY[v.severity] || SEVERITY.low}`}>
+                              {v.severity}
+                            </span>
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              )}
+            </div>
           )}
-        </p>
-      </div>
-    </div>
+        </>
+      )}
+    </section>
   );
 };
 
-export default ModerationMetrics;
+function CountTable({ title, rows }: { title: string; rows: [string, unknown][] }) {
+  return (
+    <div>
+      <h2 className="text-lg font-semibold">{title}</h2>
+      {rows.length === 0 ? (
+        <p className="mt-4 text-ink-mute">None in this period.</p>
+      ) : (
+        <table className="tnum mt-4 w-full text-sm">
+          <tbody>
+            {rows.map(([k, v]) => (
+              <tr key={k} className="border-b border-rule">
+                <td className="py-2.5 capitalize text-ink-soft">{humanize(k)}</td>
+                <td className="py-2.5 text-right font-semibold">{String(v)}</td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      )}
+    </div>
+  );
+}
+
+export default ModerationMetricsPanel;

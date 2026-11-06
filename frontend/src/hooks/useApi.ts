@@ -112,6 +112,8 @@ export function useStreamingStoryWriting() {
       }, streamingSpeed);
     } catch (err: any) {
       setError(err.message || 'An error occurred');
+    } finally {
+      // The stream can end with an error chunk and no 'complete' chunk.
       setLoading(false);
     }
   }, []);

@@ -2,74 +2,155 @@
 @tailwind components;
 @tailwind utilities;
 
-/* Custom animations */
-@keyframes fadeInUp {
-  from {
-    opacity: 0;
-    transform: translateY(30px);
+:root {
+  --ink: #151515;
+  --paper: #f2f0eb;
+  --series: #e8641c;
+  --band: var(--series);
+}
+
+@layer base {
+  html {
+    -webkit-font-smoothing: antialiased;
+    text-rendering: optimizeLegibility;
   }
-  to {
-    opacity: 1;
-    transform: translateY(0);
+
+  body {
+    @apply bg-paper font-sans text-ink;
+  }
+
+  ::selection {
+    background: #fbe3d5;
+    color: #151515;
+  }
+
+  :focus-visible {
+    outline: 2px solid var(--ink);
+    outline-offset: 2px;
+  }
+
+  a {
+    text-underline-offset: 0.2em;
+    text-decoration-thickness: 1px;
+  }
+
+  textarea,
+  input {
+    caret-color: var(--series);
+  }
+
+  /* Scrollbars in the paper palette */
+  * {
+    scrollbar-color: #bdb7ab transparent;
+    scrollbar-width: thin;
+  }
+  ::-webkit-scrollbar {
+    width: 10px;
+    height: 10px;
+  }
+  ::-webkit-scrollbar-thumb {
+    background: #bdb7ab;
+    border: 3px solid transparent;
+    background-clip: content-box;
+    border-radius: 10px;
   }
 }
 
-@keyframes fadeIn {
-  from {
-    opacity: 0;
+@layer components {
+  /* Display caps, as set on a paperback band */
+  .caps {
+    @apply font-display uppercase;
+    letter-spacing: 0.08em;
   }
-  to {
-    opacity: 1;
+
+  .label {
+    @apply mb-1.5 block text-sm font-semibold text-ink;
+  }
+
+  .hint {
+    @apply mt-1.5 text-sm text-ink-mute;
+  }
+
+  .field {
+    @apply w-full rounded-card border border-ink/25 bg-sheet px-3.5 py-2.5 text-base text-ink placeholder:text-ink-mute/80 transition-colors duration-150;
+  }
+  .field:hover {
+    @apply border-ink/45;
+  }
+  .field:focus {
+    @apply border-ink outline-none;
+    box-shadow: 0 0 0 3px rgba(232, 100, 28, 0.35);
+  }
+  .field:disabled {
+    @apply cursor-not-allowed bg-paper text-ink-mute;
+  }
+
+  .btn {
+    @apply inline-flex items-center justify-center gap-2 rounded-card px-5 py-2.5 text-[0.95rem] font-semibold transition-[background-color,color,border-color,transform] duration-150 ease-out-expo active:translate-y-px disabled:cursor-not-allowed disabled:opacity-45;
+  }
+  .btn-primary {
+    @apply btn bg-ink text-white hover:bg-ink-soft;
+  }
+  .btn-secondary {
+    @apply btn border border-ink/30 bg-sheet text-ink hover:border-ink;
+  }
+  .btn-quiet {
+    @apply btn px-3 text-ink-soft hover:bg-ink/5 hover:text-ink;
+  }
+  .btn-on-band {
+    @apply btn bg-white text-ink hover:bg-paper;
+  }
+
+  .notice-error {
+    @apply flex gap-3 rounded-card border border-alert/40 bg-alert-tint p-4 text-sm text-alert;
+  }
+
+  .tnum {
+    font-variant-numeric: tabular-nums lining-nums;
+  }
+
+  /* The reading page */
+  .book-text {
+    @apply font-book text-ink;
+    font-size: 1.125rem;
+    line-height: 1.75;
+    hyphens: auto;
+    font-feature-settings: 'onum' 1, 'kern' 1;
+  }
+  .book-text p + p {
+    text-indent: 1.5em;
   }
 }
 
-@keyframes slideIn {
-  from {
-    transform: translateX(-100%);
+/* Writing caret while a story streams in */
+@keyframes caret-blink {
+  0%, 45% { opacity: 1; }
+  55%, 100% { opacity: 0; }
+}
+.stream-caret {
+  display: inline-block;
+  width: 0.5em;
+  height: 1.1em;
+  margin-left: 2px;
+  vertical-align: -0.15em;
+  background: var(--band);
+  animation: caret-blink 1s steps(1) infinite;
+}
+
+/* Band colour transitions when the genre changes */
+.band-fill {
+  background-color: var(--band);
+  transition: background-color 450ms cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.01ms !important;
+    transition-duration: 0.01ms !important;
   }
-  to {
-    transform: translateX(0);
-  }
 }
 
-.animate-fadeInUp {
-  animation: fadeInUp 0.6s ease-out;
-}
-
-.animate-fadeIn {
-  animation: fadeIn 0.4s ease-out;
-}
-
-.animate-slideIn {
-  animation: slideIn 0.5s ease-out;
-}
-
-/* Gradient backgrounds */
-.gradient-bg {
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-}
-
-.gradient-text {
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-  -webkit-background-clip: text;
-  -webkit-text-fill-color: transparent;
-  background-clip: text;
-}
-
-/* Custom scrollbar */
-::-webkit-scrollbar {
-  width: 8px;
-}
-
-::-webkit-scrollbar-track {
-  background: #f1f1f1;
-}
-
-::-webkit-scrollbar-thumb {
-  background: #c1c1c1;
-  border-radius: 4px;
-}
-
-::-webkit-scrollbar-thumb:hover {
-  background: #a8a8a8;
+@media print {
+  .no-print { display: none !important; }
+  body { background: white; }
 }

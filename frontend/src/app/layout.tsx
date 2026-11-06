@@ -1,14 +1,33 @@
 import type { Metadata } from "next";
-import { Inter } from "next/font/google";
+import { Josefin_Sans, Figtree, Literata } from "next/font/google";
 import "./globals.css";
 import { AuthProvider } from "@/contexts/AuthContext";
 
-const inter = Inter({ subsets: ["latin"] });
+const display = Josefin_Sans({
+  subsets: ["latin"],
+  weight: ["600", "700"],
+  variable: "--font-display",
+  display: "swap",
+});
+
+const ui = Figtree({
+  subsets: ["latin"],
+  weight: ["400", "500", "600", "700"],
+  variable: "--font-ui",
+  display: "swap",
+});
+
+const book = Literata({
+  subsets: ["latin"],
+  style: ["normal", "italic"],
+  variable: "--font-book",
+  display: "swap",
+});
 
 export const metadata: Metadata = {
   title: "TaelioAI - Your AI Storytelling Companion",
-  description: "Generate, write, and edit stories effortlessly with AI-powered assistance",
-  keywords: ["AI", "story writing", "creative writing", "storytelling", "fiction"],
+  description: "Turn a spark into a finished story: TaelioAI's agents build the idea, write the story and revise it with you.",
+  keywords: ["story writing", "creative writing", "storytelling", "fiction", "writing companion"],
 };
 
 export default function RootLayout({
@@ -17,13 +36,9 @@ export default function RootLayout({
   children: React.ReactNode;
 }) {
   return (
-    <html lang="en">
-      <body className={inter.className}>
-        <AuthProvider>
-          <div className="min-h-screen bg-gradient-to-br from-slate-50 to-blue-50">
-            {children}
-          </div>
-        </AuthProvider>
+    <html lang="en" className={`${display.variable} ${ui.variable} ${book.variable}`}>
+      <body>
+        <AuthProvider>{children}</AuthProvider>
       </body>
     </html>
   );
