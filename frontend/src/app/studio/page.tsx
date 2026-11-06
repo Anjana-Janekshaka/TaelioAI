@@ -615,7 +615,7 @@ export default function StudioPage() {
                       </button>
                     </div>
                   </div>
-                  <div className="mb-12 flex justify-center">
+                  <div className="mb-12 flex justify-center lg:hidden">
                     <BookCover
                       size="md"
                       title={book.title}

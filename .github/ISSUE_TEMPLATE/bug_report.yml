@@ -1,0 +1,37 @@
+name: Bug report
+description: Something in TaelioAI isn't working
+labels: [bug]
+body:
+  - type: textarea
+    id: what
+    attributes:
+      label: What happened?
+      description: What did you expect, and what happened instead?
+    validations:
+      required: true
+  - type: textarea
+    id: steps
+    attributes:
+      label: Steps to reproduce
+      placeholder: |
+        1. Open the studio
+        2. ...
+    validations:
+      required: true
+  - type: dropdown
+    id: area
+    attributes:
+      label: Area
+      options: [Studio (idea / story / edit / book), Landing page, Sign-in, Plans, Content safety, API, Other]
+    validations:
+      required: true
+  - type: textarea
+    id: env
+    attributes:
+      label: Environment
+      description: Browser and OS, or API version and Python version.
+  - type: textarea
+    id: logs
+    attributes:
+      label: Screenshots or logs
+      description: Remove API keys, tokens and emails before pasting.

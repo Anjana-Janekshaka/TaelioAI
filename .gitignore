@@ -81,3 +81,12 @@ venv.bak/
 .mypy_cache/
 .dmypy.json
 dmypy.json
+
+# Local database (create it with `alembic upgrade head`)
+backend/*.db
+backend/*.db-journal
+
+# Impeccable scratch output (screenshots, decision-page logs)
+.impeccable/review/
+.impeccable/questions/
+.impeccable/build/

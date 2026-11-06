@@ -1,149 +1,52 @@
-# TaelioAI Frontend
+# TaelioAI web app
 
-A beautiful, modern frontend for the TaelioAI story generation platform built with Next.js, TypeScript, and Tailwind CSS.
+The Next.js 14 client for TaelioAI. See the [root README](../README.md) for the product overview and full setup.
 
-## Features
+## Run it
 
-- 🎨 **Beautiful UI**: Modern, responsive design with smooth animations
-- 🚀 **Fast Performance**: Built with Next.js 14 and optimized for speed
-- 📱 **Mobile First**: Fully responsive design that works on all devices
-- 🎯 **Type Safe**: Full TypeScript support for better development experience
-- 🎭 **Interactive**: Smooth animations and transitions with Framer Motion
-- 🔌 **API Integration**: Seamless connection to the TaelioAI backend
-
-## Getting Started
-
-### Prerequisites
-
-- Node.js 18+ 
-- npm or yarn
-- Backend API running on http://localhost:8000
-
-### Installation
-
-1. Install dependencies:
 ```bash
 npm install
+cp .env.example .env.local   # NEXT_PUBLIC_API_URL, defaults to http://localhost:8000
+npm run dev                  # http://localhost:3000
 ```
 
-2. Create environment file:
-```bash
-cp .env.example .env.local
-```
+The API must be running for sign-in and writing to work.
 
-3. Update the API URL in `.env.local` if needed:
-```
-NEXT_PUBLIC_API_URL=http://localhost:8000
-```
+## Scripts
 
-4. Start the development server:
-```bash
-npm run dev
-```
+| Command | What it does |
+| --- | --- |
+| `npm run dev` | Development server with hot reload |
+| `npm run build` | Production build (includes lint and type checks) |
+| `npm run start` | Serve the production build |
+| `npm run type-check` | TypeScript only |
 
-5. Open [http://localhost:3000](http://localhost:3000) in your browser.
+## Routes
 
-## Available Scripts
+| Route | Purpose |
+| --- | --- |
+| `/` | Landing page: the working cover, how a story gets made, genre shelf |
+| `/studio` | The writing studio: Idea → Story → Edit → Book (sign-in required) |
+| `/login`, `/register` | Passwordless email sign-in; both accept `?next=` |
+| `/select-tier` | Plans |
+| `/metrics` | Your content-safety metrics (sign-in required) |
 
-- `npm run dev` - Start development server
-- `npm run build` - Build for production
-- `npm run start` - Start production server
-- `npm run lint` - Run ESLint
-- `npm run type-check` - Run TypeScript type checking
+## Code map
 
-## Project Structure
-
-```
+```text
 src/
-├── app/                 # Next.js app directory
-│   ├── globals.css     # Global styles
-│   ├── layout.tsx      # Root layout
-│   └── page.tsx        # Home page
-├── components/         # React components
-│   ├── Header.tsx      # Navigation header
-│   ├── Hero.tsx       # Hero section
-│   ├── IdeaGenerator.tsx # Idea generation component
-│   ├── StoryWriter.tsx # Story writing component
-│   ├── WorkflowSelector.tsx # Workflow selection
-│   ├── Features.tsx   # Features section
-│   └── Footer.tsx     # Footer component
-├── hooks/              # Custom React hooks
-│   └── useApi.ts      # API integration hooks
-└── lib/               # Utility libraries
-    └── api.ts         # API client and types
+├── app/                 # routes (App Router)
+├── components/
+│   ├── book/BookCover   # the three-band cover used everywhere
+│   ├── site/            # header, footer, auth shell, email sign-in
+│   └── studio/          # shared studio pieces (errors, headings, downloads)
+├── contexts/AuthContext # signed-in user
+├── hooks/useApi         # idea, story (streaming) and workflow hooks
+└── lib/
+    ├── api.ts           # Axios client, token refresh, SSE parsing
+    └── series.ts        # genres, band colours, plain-language errors
 ```
 
-## Components
+## Design system
 
-### Core Components
-
-- **Header**: Navigation with mobile menu
-- **Hero**: Landing section with call-to-action
-- **WorkflowSelector**: Tab-based workflow selection
-- **IdeaGenerator**: AI-powered idea generation
-- **StoryWriter**: Complete story writing interface
-- **Features**: Feature showcase and stats
-- **Footer**: Links and company information
-
-### API Integration
-
-The frontend connects to the TaelioAI backend through:
-
-- **Idea Generation**: `/idea/generate-idea`
-- **Story Writing**: `/story/write-story`
-- **Full Workflow**: `/workflow/generate-full-story`
-- **Health Check**: `/health`
-
-## Styling
-
-The project uses Tailwind CSS with custom design system:
-
-- **Colors**: Blue and purple gradient theme
-- **Typography**: Inter font family
-- **Animations**: Framer Motion for smooth transitions
-- **Responsive**: Mobile-first design approach
-
-## Development
-
-### Adding New Features
-
-1. Create component in `src/components/`
-2. Add API integration in `src/lib/api.ts`
-3. Create custom hooks in `src/hooks/`
-4. Update types as needed
-
-### API Integration
-
-Use the provided hooks for API calls:
-
-```typescript
-import { useIdeaGeneration } from '@/hooks/useApi';
-
-const { idea, loading, error, generateIdea } = useIdeaGeneration();
-```
-
-## Deployment
-
-The frontend can be deployed to:
-
-- **Vercel** (recommended for Next.js)
-- **Netlify**
-- **AWS Amplify**
-- **Any static hosting service**
-
-Build the project:
-```bash
-npm run build
-```
-
-## Contributing
-
-1. Follow the existing code style
-2. Use TypeScript for all new code
-3. Add proper error handling
-4. Test on multiple screen sizes
-5. Ensure accessibility standards
-
-## License
-
-This project is part of the TaelioAI platform.
+Every story is a paperback in the TaelioAI series. Genre colours live in `src/lib/series.ts`; colour, type and radius tokens in `tailwind.config.js`; component classes (`.btn-primary`, `.field`, `.book-text`, …) in `src/app/globals.css`. Fonts: Josefin Sans (display), Figtree (UI), Literata (story text), loaded through `next/font`.
